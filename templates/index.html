@@ -4,235 +4,258 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>音视频工具</title>
-    <link rel="stylesheet" href="/static/style.css?v=20260625-layout-pop-5" />
+    <link rel="stylesheet" href="/static/style.css?v=20260626-glass-workbench-2" />
   </head>
-  <body>
-    <main class="shell">
-      <header class="hero-panel">
-        <div>
-          <p class="eyebrow">LOCAL MEDIA WORKBENCH</p>
-          <h1>音视频工具</h1>
-          <p>把图片超分、视频下载、B站登录状态和封面提取拆成清楚的 4 个工作区。</p>
+  <body data-theme="aurora">
+    <main class="app-shell">
+      <header class="topbar glass-panel">
+        <div class="brand">
+          <span class="brand-mark">AV</span>
+          <div>
+            <p class="eyebrow">LOCAL MEDIA WORKBENCH</p>
+            <h1>音视频工具</h1>
+          </div>
         </div>
-        <div class="hero-note">
-          <strong>使用流程</strong>
-          <span>选择素材或链接</span>
-          <span>确认规格</span>
-          <span>等待任务完成</span>
+
+        <nav class="tool-tabs" aria-label="功能区">
+          <button class="tab-button active" type="button" data-target="image-panel">图片超分</button>
+          <button class="tab-button" type="button" data-target="youtube-panel">YouTube</button>
+          <button class="tab-button" type="button" data-target="bilibili-panel">bilibili</button>
+          <button class="tab-button" type="button" data-target="thumbnail-panel">封面</button>
+        </nav>
+
+        <div class="theme-switcher" aria-label="主题色">
+          <button class="theme-dot aurora active" type="button" data-theme="aurora" title="极光"></button>
+          <button class="theme-dot ocean" type="button" data-theme="ocean" title="海蓝"></button>
+          <button class="theme-dot sunset" type="button" data-theme="sunset" title="暖橘"></button>
         </div>
       </header>
 
-      <section class="workspace">
-        <section class="panel tool-card main-panel accent-yellow">
-          <span class="step-badge">01</span>
-          <div class="title-row">
-            <div>
-              <p class="eyebrow">IMAGE UPSCALE</p>
-              <h2>图片超分</h2>
-              <p>上传图片，选择模型和目标规格。</p>
-            </div>
-            <span class="badge">GPU</span>
-          </div>
-
-          <form id="job-form" class="form">
-            <label class="dropzone" for="file">
-              <input id="file" name="file" type="file" accept=".png,.jpg,.jpeg,.webp,image/*" required />
-              <span id="file-label">选择图片，或拖到这里</span>
-            </label>
-
-            <div class="grid">
-              <label>
-                <span>模型</span>
-                <select name="model">
-                  <option value="anime">Anime 6B（插画 / 动漫人物）</option>
-                  <option value="anime-video">Anime Video v3（动画帧 / 连续画面）</option>
-                  <option value="general">General x4plus（照片 / 截图 / 通用）</option>
-                </select>
-              </label>
-
-              <label>
-                <span>目标规格</span>
-                <select id="target" name="target">
-                  <option value="1k">1K</option>
-                  <option value="2k">2K</option>
-                  <option value="4k" selected>4K</option>
-                  <option value="custom">自定义长边</option>
-                </select>
-              </label>
-
-              <label id="custom-target-wrap" class="hidden">
-                <span>自定义长边</span>
-                <input name="custom_long_edge" type="number" min="512" max="8192" step="16" placeholder="例如 3000" />
-              </label>
-
-              <label>
-                <span>性能模式</span>
-                <select name="tile_preset">
-                  <option value="stable">稳定</option>
-                  <option value="fast">快速</option>
-                  <option value="safe">省显存</option>
-                  <option value="auto">自动</option>
-                </select>
-              </label>
-
-              <label>
-                <span>格式</span>
-                <select name="ext">
-                  <option value="png">PNG</option>
-                  <option value="jpg">JPG</option>
-                </select>
-              </label>
-            </div>
-
-            <button id="submit" type="submit">开始超分</button>
-          </form>
-        </section>
-
-        <section class="panel tool-card youtube-panel accent-pink">
-          <span class="step-badge">02</span>
-          <div class="title-row compact">
-            <div>
-              <p class="eyebrow">YOUTUBE</p>
-              <h2>YouTube视频下载</h2>
-              <p>粘贴链接，默认抓取最高可用画质。</p>
-            </div>
-          </div>
-
-          <form id="youtube-download-form" class="form">
-            <label>
-              <span>YouTube链接</span>
-              <input name="url" type="url" placeholder="https://www.youtube.com/watch?v=..." required />
-            </label>
-
-            <div class="grid">
-              <label>
-                <span>质量</span>
-                <select name="quality">
-                  <option value="best" selected>最高可用</option>
-                  <option value="2160p">2160P</option>
-                  <option value="1440p">1440P</option>
-                  <option value="1080p">1080P</option>
-                  <option value="720p">720P</option>
-                  <option value="480p">480P</option>
-                </select>
-              </label>
-
-              <label>
-                <span>类型</span>
-                <select name="file_type">
-                  <option value="mp4" selected>MP4</option>
-                  <option value="mkv">MKV</option>
-                  <option value="webm">WEBM</option>
-                </select>
-              </label>
-            </div>
-
-            <button id="youtube-download-submit" type="submit">下载 YouTube 视频</button>
-          </form>
-        </section>
-
-        <section class="panel tool-card bilibili-panel accent-cyan">
-          <span class="step-badge">03</span>
-          <div class="title-row compact">
-            <div>
-              <p class="eyebrow">BILIBILI</p>
-              <h2>bilibili视频下载</h2>
-              <p>先抓登录状态，再下载会员可用规格。</p>
-            </div>
-          </div>
-
-          <div class="auth-strip">
-            <div>
-              <strong>B站登录状态</strong>
-              <span id="bilibili-auth-status">检查中...</span>
-            </div>
-            <div class="auth-buttons">
-              <button id="bilibili-open-login" class="secondary-action" type="button">打开B站登录窗口</button>
-              <button id="bilibili-capture-auth" type="button">抓取登录状态</button>
-            </div>
-          </div>
-
-          <form id="bilibili-download-form" class="form">
-            <label>
-              <span>bilibili链接</span>
-              <input name="url" type="url" placeholder="https://www.bilibili.com/video/..." required />
-            </label>
-
-            <div class="grid">
-              <label>
-                <span>质量</span>
-                <select name="quality">
-                  <option value="best" selected>最高可用</option>
-                  <option value="2160p">2160P</option>
-                  <option value="1440p">1440P</option>
-                  <option value="1080p">1080P</option>
-                  <option value="720p">720P</option>
-                  <option value="480p">480P</option>
-                </select>
-              </label>
-
-              <label>
-                <span>类型</span>
-                <select name="file_type">
-                  <option value="mp4" selected>MP4</option>
-                  <option value="mkv">MKV</option>
-                  <option value="webm">WEBM</option>
-                </select>
-              </label>
-            </div>
-
-            <button id="bilibili-download-submit" type="submit">下载 bilibili 视频</button>
-          </form>
-        </section>
-
-        <section class="panel tool-card thumbnail-panel accent-purple">
-          <span class="step-badge">04</span>
-          <div class="title-row compact">
-            <div>
-              <p class="eyebrow">THUMBNAIL</p>
-              <h2>视频封面下载</h2>
-              <p>提取任意 yt-dlp 支持链接的封面。</p>
-            </div>
-          </div>
-
-          <form id="thumbnail-form" class="form">
-            <label>
-              <span>视频链接</span>
-              <input name="url" type="url" placeholder="https://..." required />
-            </label>
-
-            <button id="thumbnail-submit" type="submit">下载视频封面</button>
-          </form>
-        </section>
+      <section class="hero-strip">
+        <div class="hero-copy">
+          <p>把图片超分、视频下载、B站登录和封面提取收进一个本地工作台。</p>
+        </div>
+        <div class="flow">
+          <span>选择素材</span>
+          <span>确认规格</span>
+          <span>等待完成</span>
+        </div>
       </section>
 
-      <section class="panel status-panel">
-        <span class="status-tab">LIVE</span>
-        <p class="eyebrow">JOB STATUS</p>
-        <h2>任务状态</h2>
-        <div id="status" class="status idle">等待任务</div>
+      <section class="workbench">
+        <section class="tools-area glass-panel">
+          <section id="image-panel" class="tool-pane active" data-panel>
+            <div class="pane-head">
+              <div>
+                <p class="eyebrow">IMAGE UPSCALE</p>
+                <h2>图片超分</h2>
+                <p>上传图片，选择模型和目标规格。</p>
+              </div>
+              <span class="pane-badge">GPU</span>
+            </div>
 
-        <div id="progress-wrap" class="progress-wrap hidden">
-          <div class="progress-head">
-            <span id="progress-label">准备中</span>
-            <strong id="progress-percent">0%</strong>
-          </div>
-          <div class="progress-track">
-            <div id="progress-bar" class="progress-bar"></div>
-          </div>
-        </div>
+            <form id="job-form" class="form">
+              <label class="dropzone" for="file">
+                <input id="file" name="file" type="file" accept=".png,.jpg,.jpeg,.webp,image/*" required />
+                <span id="file-label">选择图片，或拖到这里</span>
+              </label>
 
-        <div id="meta" class="meta"></div>
-        <div id="job-actions" class="job-actions hidden">
-          <button id="pause-job" class="secondary-action" type="button">暂停</button>
-          <button id="resume-job" class="secondary-action hidden" type="button">继续</button>
-          <button id="cancel-job" class="danger-action" type="button">取消</button>
-        </div>
-        <a id="download" class="download hidden" href="#">下载结果</a>
-        <button id="save-as" class="save-as hidden" type="button">保存到...</button>
+              <div class="grid">
+                <label>
+                  <span>模型</span>
+                  <select name="model">
+                    <option value="anime">Anime 6B（插画 / 动漫人物）</option>
+                    <option value="anime-video">Anime Video v3（动画帧 / 连续画面）</option>
+                    <option value="general">General x4plus（照片 / 截图 / 通用）</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>目标规格</span>
+                  <select id="target" name="target">
+                    <option value="1k">1K</option>
+                    <option value="2k">2K</option>
+                    <option value="4k" selected>4K</option>
+                    <option value="custom">自定义长边</option>
+                  </select>
+                </label>
+
+                <label id="custom-target-wrap" class="hidden">
+                  <span>自定义长边</span>
+                  <input name="custom_long_edge" type="number" min="512" max="8192" step="16" placeholder="例如 3000" />
+                </label>
+
+                <label>
+                  <span>性能模式</span>
+                  <select name="tile_preset">
+                    <option value="stable">稳定</option>
+                    <option value="fast">快速</option>
+                    <option value="safe">省显存</option>
+                    <option value="auto">自动</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>格式</span>
+                  <select name="ext">
+                    <option value="png">PNG</option>
+                    <option value="jpg">JPG</option>
+                  </select>
+                </label>
+              </div>
+
+              <button id="submit" type="submit">开始超分</button>
+            </form>
+          </section>
+
+          <section id="youtube-panel" class="tool-pane" data-panel>
+            <div class="pane-head">
+              <div>
+                <p class="eyebrow">YOUTUBE</p>
+                <h2>YouTube 视频下载</h2>
+                <p>粘贴链接，默认抓取最高可用画质。</p>
+              </div>
+            </div>
+
+            <form id="youtube-download-form" class="form">
+              <label>
+                <span>YouTube 链接</span>
+                <input name="url" type="url" placeholder="https://www.youtube.com/watch?v=..." required />
+              </label>
+
+              <div class="grid">
+                <label>
+                  <span>质量</span>
+                  <select name="quality">
+                    <option value="best" selected>最高可用</option>
+                    <option value="2160p">2160P</option>
+                    <option value="1440p">1440P</option>
+                    <option value="1080p">1080P</option>
+                    <option value="720p">720P</option>
+                    <option value="480p">480P</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>类型</span>
+                  <select name="file_type">
+                    <option value="mp4" selected>MP4</option>
+                    <option value="mkv">MKV</option>
+                    <option value="webm">WEBM</option>
+                  </select>
+                </label>
+              </div>
+
+              <button id="youtube-download-submit" type="submit">下载 YouTube 视频</button>
+            </form>
+          </section>
+
+          <section id="bilibili-panel" class="tool-pane" data-panel>
+            <div class="pane-head">
+              <div>
+                <p class="eyebrow">BILIBILI</p>
+                <h2>bilibili 视频下载</h2>
+                <p>先抓登录状态，再下载账号可用规格。</p>
+              </div>
+            </div>
+
+            <div class="auth-strip">
+              <div>
+                <strong>B站登录状态</strong>
+                <span id="bilibili-auth-status">检查中...</span>
+              </div>
+              <div class="auth-buttons">
+                <button id="bilibili-open-login" class="secondary-action" type="button">打开B站登录窗口</button>
+                <button id="bilibili-capture-auth" type="button">抓取登录状态</button>
+              </div>
+            </div>
+
+            <form id="bilibili-download-form" class="form">
+              <label>
+                <span>bilibili 链接</span>
+                <input name="url" type="url" placeholder="https://www.bilibili.com/video/..." required />
+              </label>
+
+              <div class="grid">
+                <label>
+                  <span>质量</span>
+                  <select name="quality">
+                    <option value="best" selected>最高可用</option>
+                    <option value="2160p">2160P</option>
+                    <option value="1440p">1440P</option>
+                    <option value="1080p">1080P</option>
+                    <option value="720p">720P</option>
+                    <option value="480p">480P</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>类型</span>
+                  <select name="file_type">
+                    <option value="mp4" selected>MP4</option>
+                    <option value="mkv">MKV</option>
+                    <option value="webm">WEBM</option>
+                  </select>
+                </label>
+              </div>
+
+              <button id="bilibili-download-submit" type="submit">下载 bilibili 视频</button>
+            </form>
+          </section>
+
+          <section id="thumbnail-panel" class="tool-pane" data-panel>
+            <div class="pane-head">
+              <div>
+                <p class="eyebrow">THUMBNAIL</p>
+                <h2>视频封面下载</h2>
+                <p>提取任意 yt-dlp 支持链接的封面。</p>
+              </div>
+            </div>
+
+            <form id="thumbnail-form" class="form">
+              <label>
+                <span>视频链接</span>
+                <input name="url" type="url" placeholder="https://..." required />
+              </label>
+
+              <button id="thumbnail-submit" type="submit">下载视频封面</button>
+            </form>
+          </section>
+        </section>
+
+        <aside class="status-panel glass-panel">
+          <div class="status-head">
+            <div>
+              <p class="eyebrow">JOB STATUS</p>
+              <h2>任务状态</h2>
+            </div>
+            <span class="live-dot">LIVE</span>
+          </div>
+
+          <div id="status" class="status idle">等待任务</div>
+
+          <div id="progress-wrap" class="progress-wrap hidden">
+            <div class="progress-head">
+              <span id="progress-label">准备中</span>
+              <strong id="progress-percent">0%</strong>
+            </div>
+            <div class="progress-track">
+              <div id="progress-bar" class="progress-bar"></div>
+            </div>
+          </div>
+
+          <div id="meta" class="meta"></div>
+          <div id="job-actions" class="job-actions hidden">
+            <button id="pause-job" class="secondary-action" type="button">暂停</button>
+            <button id="resume-job" class="secondary-action hidden" type="button">继续</button>
+            <button id="cancel-job" class="danger-action" type="button">取消</button>
+          </div>
+          <a id="download" class="download hidden" href="#">下载结果</a>
+          <button id="save-as" class="save-as hidden" type="button">保存到...</button>
+        </aside>
       </section>
     </main>
 
-    <script src="/static/app.js?v=20260625-layout-pop-5"></script>
+    <script src="/static/app.js?v=20260626-glass-workbench-2"></script>
   </body>
 </html>

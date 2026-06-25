@@ -25,11 +25,44 @@ const progressPercent = document.querySelector("#progress-percent");
 const progressBar = document.querySelector("#progress-bar");
 const target = document.querySelector("#target");
 const customTargetWrap = document.querySelector("#custom-target-wrap");
+const tabButtons = document.querySelectorAll(".tab-button");
+const toolPanes = document.querySelectorAll("[data-panel]");
+const themeButtons = document.querySelectorAll(".theme-dot");
 
 let pollTimer = null;
 let currentJobId = null;
 let currentDownloadUrl = null;
 let currentDownloadName = "result.png";
+
+function activatePane(id) {
+  tabButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.target === id);
+  });
+  toolPanes.forEach((pane) => {
+    pane.classList.toggle("active", pane.id === id);
+  });
+}
+
+tabButtons.forEach((button) => {
+  button.addEventListener("click", () => activatePane(button.dataset.target));
+});
+
+function applyTheme(theme) {
+  document.body.dataset.theme = theme;
+  themeButtons.forEach((button) => {
+    button.classList.toggle("active", button.dataset.theme === theme);
+  });
+  localStorage.setItem("audioVideoToolTheme", theme);
+}
+
+const savedTheme = localStorage.getItem("audioVideoToolTheme");
+if (savedTheme) {
+  applyTheme(savedTheme);
+}
+
+themeButtons.forEach((button) => {
+  button.addEventListener("click", () => applyTheme(button.dataset.theme));
+});
 
 if (fileInput && fileLabel) {
   fileInput.addEventListener("change", () => {
