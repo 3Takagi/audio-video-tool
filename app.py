@@ -546,6 +546,13 @@ def safe_name(filename: str) -> str:
     return "".join(ch for ch in name if ch.isalnum() or ch in "._-") or "upload.png"
 
 
+def ascii_runtime_image_path(input_path: Path, job_id: str) -> Path:
+    suffix = input_path.suffix.lower()
+    if suffix not in ALLOWED_EXTS:
+        suffix = ".png"
+    return input_path.parent / f"input_{job_id}{suffix}"
+
+
 def validate_image(path: Path) -> tuple[int, int]:
     try:
         with Image.open(path) as image:
@@ -645,6 +652,9 @@ def run_upscale(job_id: str) -> None:
     input_path = Path(data["input_path"])
     output_dir = Path(data["output_dir"])
     output_dir.mkdir(parents=True, exist_ok=True)
+    runtime_input_path = ascii_runtime_image_path(input_path, job_id)
+    if runtime_input_path.resolve() != input_path.resolve():
+        shutil.copy2(input_path, runtime_input_path)
 
     update_job(job_id, status="running", message="Real-ESRGAN is processing the image", progress=8, progress_label="开始处理")
 
@@ -652,7 +662,7 @@ def run_upscale(job_id: str) -> None:
         str(PYTHON),
         str(REAL_ESRGAN),
         "-i",
-        str(input_path),
+        str(runtime_input_path),
         "-o",
         str(output_dir),
         "-n",
@@ -684,7 +694,7 @@ def run_upscale(job_id: str) -> None:
             )
             if job_is_canceled(job_id):
                 return
-            out_file = find_output_file(output_dir, input_path, data["suffix"], data["ext"])
+            out_file = find_output_file(output_dir, runtime_input_path, data["suffix"], data["ext"])
             if result.returncode == 0 or out_file is not None:
                 break
             update_job(job_id, message="Real-ESRGAN failed once, retrying", returncode=result.returncode)
@@ -712,6 +722,11 @@ def run_upscale(job_id: str) -> None:
             )
             return
 
+        final_file = unique_path(output_dir / output_name(input_path, data["suffix"], data["ext"]))
+        if out_file.resolve() != final_file.resolve():
+            shutil.move(str(out_file), final_file)
+            out_file = final_file
+
         width, height = validate_image(out_file)
         update_job(
             job_id,
@@ -730,6 +745,9 @@ def run_upscale(job_id: str) -> None:
         )
     except Exception as exc:  # noqa: BLE001 - background tasks must persist errors.
         update_job(job_id, status="failed", message=str(exc))
+    finally:
+        if runtime_input_path.resolve() != input_path.resolve():
+            runtime_input_path.unlink(missing_ok=True)
 
 
 def run_ytdlp(job_id: str) -> None:
