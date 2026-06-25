@@ -41,7 +41,10 @@ if ($config.host) {
   $hostName = [string]$config.host
 }
 
-if (!(Test-Path -LiteralPath $Python) -or !(Test-Path -LiteralPath $InstallMarker)) {
+if ((Test-Path -LiteralPath $Python) -and (Test-Path -LiteralPath $InstallMarker)) {
+  Write-Host ""
+  Write-Host "==> Existing runtime found, skipping dependency install" -ForegroundColor Cyan
+} else {
   Write-Host ""
   Write-Host "==> First run: installing dependencies" -ForegroundColor Cyan
   powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Root "install.ps1")

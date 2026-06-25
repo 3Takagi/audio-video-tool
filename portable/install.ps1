@@ -19,12 +19,54 @@ New-Item -ItemType Directory -Force -Path $ToolsDir | Out-Null
 New-Item -ItemType Directory -Force -Path $ConfigDir | Out-Null
 Start-Transcript -Path (Join-Path $LogDir "install.log") -Append | Out-Null
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-Remove-Item -LiteralPath $InstallMarker -Force -ErrorAction SilentlyContinue
 
 function Write-Step($Text) {
   Write-Host ""
   Write-Host "==> $Text" -ForegroundColor Cyan
 }
+
+function Test-InstalledRuntime {
+  $venvPython = Join-Path $VenvDir "Scripts\python.exe"
+  if (!(Test-Path -LiteralPath $InstallMarker) -or !(Test-Path -LiteralPath $venvPython)) {
+    return $false
+  }
+
+  $requiredWeights = @(
+    "RealESRGAN_x4plus.pth",
+    "RealESRGAN_x4plus_anime_6B.pth",
+    "realesr-animevideov3.pth"
+  )
+  foreach ($weight in $requiredWeights) {
+    $path = Join-Path $WeightsDir $weight
+    if (!(Test-Path -LiteralPath $path) -or (Get-Item -LiteralPath $path).Length -lt 1MB) {
+      return $false
+    }
+  }
+
+  if (!(Test-Path -LiteralPath (Join-Path $RealEsrganDir "inference_realesrgan.py"))) {
+    return $false
+  }
+
+  try {
+    & $venvPython -c "import fastapi, uvicorn, yt_dlp, torch, realesrgan; raise SystemExit(0)" 2>$null
+    if ($LASTEXITCODE -ne 0) {
+      return $false
+    }
+  } catch {
+    return $false
+  }
+
+  return $true
+}
+
+if (Test-InstalledRuntime) {
+  Write-Step "Existing runtime is ready"
+  Write-Host "Dependencies and model files are already configured. Skipping install."
+  Stop-Transcript | Out-Null
+  exit 0
+}
+
+Remove-Item -LiteralPath $InstallMarker -Force -ErrorAction SilentlyContinue
 
 function Test-Python($PythonExe) {
   if (!$PythonExe) {
