@@ -1,0 +1,53 @@
+{
+  "name": "audio-video-tool-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Desktop shell for Audio Video Tool",
+  "main": "main.js",
+  "scripts": {
+    "dev": "electron .",
+    "prepare-backend": "powershell -NoProfile -ExecutionPolicy Bypass -File ..\\portable\\package.ps1 -IncludePython -IncludeFfmpeg",
+    "dist": "npm run prepare-backend && electron-builder --win nsis",
+    "pack": "npm run prepare-backend && electron-builder --win dir"
+  },
+  "devDependencies": {
+    "electron": "^33.4.11",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.takagi.audiovideotool",
+    "productName": "音视频工具",
+    "directories": {
+      "output": "../dist/desktop"
+    },
+    "files": [
+      "main.js",
+      "preload.js"
+    ],
+    "extraResources": [
+      {
+        "from": "../dist/AudioVideoTool-Portable-Python",
+        "to": "backend"
+      }
+    ],
+    "asar": true,
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "音视频工具"
+    }
+  }
+}

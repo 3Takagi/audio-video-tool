@@ -64,12 +64,44 @@ powershell -ExecutionPolicy Bypass -File portable\package.ps1 -Full -MakeExe
 
 完整离线包会非常大，不建议直接提交到 Git 仓库。推荐放到 GitHub Releases。
 
+## 桌面 App
+
+桌面版位于 `desktop/`，基于 Electron。它会把本地网页包装成独立窗口，并自动启动 FastAPI 后端。
+
+首次准备：
+
+```powershell
+cd desktop
+npm install
+```
+
+开发运行：
+
+```powershell
+npm run dev
+```
+
+打包 Windows 安装器：
+
+```powershell
+npm run dist
+```
+
+安装器会输出到：
+
+```text
+dist/desktop/
+```
+
+桌面版内部仍使用便携版后端资源。首次启动需要联网安装 PyTorch 和 Real-ESRGAN 依赖。
+
 ## 目录
 
 - `app.py`：FastAPI 后端。
 - `templates/`：页面模板。
 - `static/`：前端脚本和样式。
 - `portable/`：便携版启动、安装、瘦身和打包脚本。
+- `desktop/`：Electron 桌面 App 壳。
 - `dist/`：本地生成的发布包，不提交到 Git。
 - `data/`、`uploads/`、`outputs/`、`jobs/`：运行时数据，不提交到 Git。
 
