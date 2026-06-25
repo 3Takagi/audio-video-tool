@@ -116,6 +116,10 @@ function loadingHtml() {
 </html>`;
 }
 
+function appIconPath() {
+  return path.join(__dirname, "assets", "icon.png");
+}
+
 function resolvePackageBackendRoot() {
   if (process.env.AV_TOOL_BACKEND) {
     return path.resolve(process.env.AV_TOOL_BACKEND);
@@ -305,6 +309,7 @@ async function boot() {
     minHeight: 680,
     backgroundColor: "#fff7fb",
     title: "音视频工具",
+    icon: appIconPath(),
     webPreferences: {
       preload: path.join(__dirname, "preload.js"),
       contextIsolation: true,

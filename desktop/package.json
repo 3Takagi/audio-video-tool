@@ -22,7 +22,8 @@
     },
     "files": [
       "main.js",
-      "preload.js"
+      "preload.js",
+      "assets/**/*"
     ],
     "extraResources": [
       {
@@ -32,6 +33,7 @@
     ],
     "asar": true,
     "win": {
+      "icon": "assets/icon.ico",
       "target": [
         {
           "target": "nsis",

@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" role="img" aria-label="Audio Video Tool">
+  <defs>
+    <linearGradient id="bg" x1="40" y1="32" x2="216" y2="224" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#4f7cff"/>
+      <stop offset=".56" stop-color="#c35bd4"/>
+      <stop offset="1" stop-color="#ff5d9d"/>
+    </linearGradient>
+    <linearGradient id="wave" x1="88" y1="64" x2="186" y2="196" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#ffffff"/>
+      <stop offset="1" stop-color="#ddfff9"/>
+    </linearGradient>
+  </defs>
+  <rect x="24" y="24" width="208" height="208" rx="56" fill="url(#bg)"/>
+  <circle cx="180" cy="72" r="18" fill="#2fd3c5" opacity=".95"/>
+  <path d="M90 76c0-10 11-16 20-10l68 46c9 6 9 20 0 26l-68 46c-9 6-20 0-20-10V76Z" fill="#fff"/>
+  <rect x="60" y="90" width="16" height="76" rx="8" fill="url(#wave)" opacity=".95"/>
+  <rect x="42" y="112" width="16" height="32" rx="8" fill="url(#wave)" opacity=".72"/>
+  <rect x="198" y="98" width="16" height="60" rx="8" fill="url(#wave)" opacity=".76"/>
+</svg>
