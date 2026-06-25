@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+python-multipart
+pillow
+psutil
+requests
+websocket-client
+yt-dlp

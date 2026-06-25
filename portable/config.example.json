@@ -1,0 +1,14 @@
+{
+  "host": "127.0.0.1",
+  "port": 7860,
+  "python": "runtime/venv/Scripts/python.exe",
+  "realesrgan": "tools/Real-ESRGAN/inference_realesrgan.py",
+  "data_dir": "data",
+  "uploads_dir": "data/uploads",
+  "outputs_dir": "downloads",
+  "jobs_dir": "data/jobs",
+  "bilibili_cookies": "config/bilibili-cookies.txt",
+  "bilibili_auth_config": "config/bilibili_auth.json",
+  "bilibili_login_profile": "data/bilibili-login-profile",
+  "bilibili_debug_port": 9222
+}

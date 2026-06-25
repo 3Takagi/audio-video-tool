@@ -1,0 +1,35 @@
+# Runtime data
+data/
+uploads/
+outputs/
+jobs/
+downloads/
+logs/
+*.log
+
+# Build artifacts and packaged releases
+dist/
+*.zip
+*.7z
+*.exe
+
+# Local browser/auth state
+.chrome-shot-profile/
+bilibili-login-profile/
+bilibili_auth.json
+config/
+*cookies*.txt
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+venv/
+runtime/
+
+# OS/editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
