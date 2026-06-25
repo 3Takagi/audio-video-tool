@@ -9,6 +9,7 @@ $InstallMarker = Join-Path $RuntimeDir "install.ok"
 $ToolsDir = Join-Path $Root "tools"
 $RealEsrganDir = Join-Path $ToolsDir "Real-ESRGAN"
 $WeightsDir = Join-Path $RealEsrganDir "weights"
+$BundledFfmpegBin = Join-Path $ToolsDir "ffmpeg\bin"
 $ConfigDir = Join-Path $Root "config"
 $ConfigFile = Join-Path $ConfigDir "config.json"
 
@@ -214,6 +215,9 @@ Download-File "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.2.4
 Download-File "https://github.com/xinntao/Real-ESRGAN/releases/download/v0.2.5.0/realesr-animevideov3.pth" (Join-Path $WeightsDir "realesr-animevideov3.pth")
 
 Write-Step "Check FFmpeg"
+if (Test-Path -LiteralPath (Join-Path $BundledFfmpegBin "ffmpeg.exe")) {
+  $env:PATH = $BundledFfmpegBin + ";" + $env:PATH
+}
 $ffmpeg = Get-Command ffmpeg -ErrorAction SilentlyContinue
 if ($ffmpeg -eq $null) {
   Write-Warning "FFmpeg was not found. Video merging may fail. Install FFmpeg and add it to PATH."

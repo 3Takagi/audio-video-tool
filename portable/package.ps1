@@ -86,8 +86,14 @@ if ($IncludeFfmpeg) {
   if ($FfmpegBin -eq $null) {
     Write-Warning "FFmpeg bin was not found at D:\ffmpeg\bin. The package will rely on system FFmpeg."
   } else {
-    New-Item -ItemType Directory -Force -Path (Join-Path $Stage "tools\ffmpeg") | Out-Null
-    Copy-Item -LiteralPath $FfmpegBin.Path -Destination (Join-Path $Stage "tools\ffmpeg\bin") -Recurse
+    $StageFfmpegBin = Join-Path $Stage "tools\ffmpeg\bin"
+    New-Item -ItemType Directory -Force -Path $StageFfmpegBin | Out-Null
+    foreach ($name in @("ffmpeg.exe", "ffprobe.exe")) {
+      $source = Join-Path $FfmpegBin.Path $name
+      if (Test-Path -LiteralPath $source) {
+        Copy-Item -LiteralPath $source -Destination (Join-Path $StageFfmpegBin $name) -Force
+      }
+    }
   }
 }
 

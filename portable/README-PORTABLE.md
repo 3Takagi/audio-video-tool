@@ -22,6 +22,7 @@
 
 - `runtime/venv`：Python 虚拟环境
 - `tools/Real-ESRGAN`：Real-ESRGAN 源码和模型
+- `tools/ffmpeg`：视频合并和媒体信息读取工具
 - `downloads`：输出文件
 - `config`：配置和 B站 cookies
 - `logs`：安装和服务日志
@@ -30,7 +31,8 @@
 
 - Real-ESRGAN 和 PyTorch 体积较大，首次安装会比较慢。
 - 首次安装时不要关闭命令行窗口；如果网络中断，重新双击 `start.bat` 会继续安装。
-- 视频下载合并高清音视频需要 FFmpeg。若未安装 FFmpeg，脚本会提示；建议安装后加入 PATH。
+- 便携包已内置 FFmpeg 和 FFprobe，用于合并高清音视频。
+- B站登录窗口需要本机安装 Chrome。
 - B站登录状态只保存在本机 `config/bilibili-cookies.txt`，不要把这个文件发给别人。
 - 公开视频下载服务涉及版权和平台条款风险，本项目默认定位是本机个人工具，不建议把 YouTube / bilibili 下载功能直接做成公网服务。
 - 如果启动失败，先查看 `logs/install.log` 或 `logs/server.err.log`。

@@ -28,6 +28,8 @@ start.bat
 
 首次运行会自动安装依赖。ZIP 本身约几十 MB，安装完成后目录通常会增长到约 5 GB，因为 PyTorch 和 Real-ESRGAN 依赖体积较大。
 
+便携包内置 Python、Real-ESRGAN 源码、基础模型权重、FFmpeg 和 FFprobe。首次运行仍需要联网安装 PyTorch 和 Python 依赖。
+
 ## 本地开发
 
 开发环境需要 Python 3.10 或 3.11。
@@ -74,6 +76,7 @@ powershell -ExecutionPolicy Bypass -File portable\package.ps1 -Full -MakeExe
 ## 注意
 
 - 首次安装需要联网下载 PyTorch、Python 包和模型权重。
-- 视频下载合并高清音视频建议安装 FFmpeg，并加入 PATH。
+- 便携包已内置 FFmpeg 和 FFprobe；源码开发环境可自行安装 FFmpeg。
+- B站登录状态抓取需要本机安装 Chrome。
 - bilibili cookies 只应保存在本机，不要提交或分享。
 - 本项目定位为本机个人工具。公开视频下载功能涉及平台条款和版权风险，不建议直接部署成公网下载服务。
