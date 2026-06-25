@@ -1,6 +1,17 @@
 $ErrorActionPreference = "Stop"
 
-$Root = Split-Path -Parent $MyInvocation.MyCommand.Path
+$PackageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
+$SyncScript = Join-Path $PackageRoot "sync-backend.ps1"
+if (Test-Path -LiteralPath $SyncScript) {
+  $syncOutput = powershell -NoProfile -ExecutionPolicy Bypass -File $SyncScript -PackageRoot $PackageRoot
+  if ($LASTEXITCODE -eq 0 -and $syncOutput) {
+    $Root = [string]($syncOutput | Select-Object -Last 1)
+  } else {
+    $Root = $PackageRoot
+  }
+} else {
+  $Root = $PackageRoot
+}
 $ConfigDir = Join-Path $Root "config"
 $ConfigFile = Join-Path $ConfigDir "config.json"
 $ExampleConfig = Join-Path $Root "config.example.json"

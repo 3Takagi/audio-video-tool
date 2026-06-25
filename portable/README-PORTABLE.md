@@ -14,10 +14,19 @@
 1. 解压 ZIP。
 2. 如果想用桌面 App，双击 `AudioVideoTool-Desktop-Setup-0.1.0.exe` 安装。
 3. 如果想用便携版，双击 `start.bat`。
-4. 第一次运行会自动调用 `install.ps1` 安装依赖。
-5. 安装窗口显示 `Install complete` 后，网页会自动打开。
+4. 如果后端已经运行，也可以打开 `AudioVideoTool.html` 作为网页快捷入口。
+5. 第一次运行会自动调用 `install.ps1` 安装依赖。
+6. 安装窗口显示 `Install complete` 后，网页会自动打开。
 
 首次安装需要联网下载 PyTorch、Real-ESRGAN 依赖和少量模型文件。ZIP 本身较小，但安装完成后目录通常会增长到约 5 GB。
+
+桌面版和便携版共享同一个后端环境：
+
+```text
+%LocalAppData%\AudioVideoTool\backend
+```
+
+因此 setup 版配置好环境后，再运行 `start.bat` 不会重复安装。
 
 依赖会下载到当前文件夹：
 

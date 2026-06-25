@@ -116,7 +116,7 @@ function loadingHtml() {
 </html>`;
 }
 
-function resolveBackendRoot() {
+function resolvePackageBackendRoot() {
   if (process.env.AV_TOOL_BACKEND) {
     return path.resolve(process.env.AV_TOOL_BACKEND);
   }
@@ -128,6 +128,36 @@ function resolveBackendRoot() {
     return portable;
   }
   return path.resolve(__dirname, "..");
+}
+
+function copyRecursive(source, dest, ifMissing = false) {
+  if (!fs.existsSync(source)) return;
+  if (ifMissing && fs.existsSync(dest)) return;
+  fs.mkdirSync(path.dirname(dest), { recursive: true });
+  fs.rmSync(dest, { recursive: true, force: true });
+  fs.cpSync(source, dest, { recursive: true });
+}
+
+function syncBackendToShared(packageRoot) {
+  if (process.env.AV_TOOL_BACKEND) {
+    return packageRoot;
+  }
+  const sharedRoot = path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "AudioVideoTool", "backend");
+  fs.mkdirSync(sharedRoot, { recursive: true });
+
+  copyRecursive(path.join(packageRoot, "app"), path.join(sharedRoot, "app"));
+  copyRecursive(path.join(packageRoot, "requirements.txt"), path.join(sharedRoot, "requirements.txt"));
+  copyRecursive(path.join(packageRoot, "install.ps1"), path.join(sharedRoot, "install.ps1"));
+  copyRecursive(path.join(packageRoot, "slim.ps1"), path.join(sharedRoot, "slim.ps1"));
+  copyRecursive(path.join(packageRoot, "config.example.json"), path.join(sharedRoot, "config.example.json"), true);
+  copyRecursive(path.join(packageRoot, "runtime", "python"), path.join(sharedRoot, "runtime", "python"), true);
+  copyRecursive(path.join(packageRoot, "tools", "Real-ESRGAN"), path.join(sharedRoot, "tools", "Real-ESRGAN"), true);
+  copyRecursive(path.join(packageRoot, "tools", "ffmpeg"), path.join(sharedRoot, "tools", "ffmpeg"), true);
+
+  for (const name of ["config", "data", "downloads", "logs"]) {
+    fs.mkdirSync(path.join(sharedRoot, name), { recursive: true });
+  }
+  return sharedRoot;
 }
 
 function ensureConfig(root) {
@@ -288,7 +318,8 @@ async function boot() {
     return { action: "deny" };
   });
 
-  const root = resolveBackendRoot();
+  const packageRoot = resolvePackageBackendRoot();
+  const root = syncBackendToShared(packageRoot);
   sendStatus({ message: "准备后端资源", line: `Backend: ${root}` });
   try {
     const url = await startBackend(root);

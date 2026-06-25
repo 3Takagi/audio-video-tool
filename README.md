@@ -27,7 +27,15 @@ start.bat
 AudioVideoTool-Desktop-Setup-0.1.0.exe
 ```
 
-`start.bat` 是便携版入口；`AudioVideoTool-Desktop-Setup-0.1.0.exe` 是桌面 App 安装器。首次运行会自动安装依赖。ZIP 安装完成后目录通常会增长到约 5 GB，因为 PyTorch 和 Real-ESRGAN 依赖体积较大。
+`start.bat` 是便携版入口；`AudioVideoTool.html` 是已启动服务的网页快捷入口；`AudioVideoTool-Desktop-Setup-0.1.0.exe` 是桌面 App 安装器。首次运行会自动安装依赖。ZIP 安装完成后目录通常会增长到约 5 GB，因为 PyTorch 和 Real-ESRGAN 依赖体积较大。
+
+桌面版和便携版共享同一个后端环境：
+
+```text
+%LocalAppData%\AudioVideoTool\backend
+```
+
+因此任意一种入口完成首次初始化后，另一种入口会直接复用已有环境。
 
 便携包内置 Python、Real-ESRGAN 源码、基础模型权重、FFmpeg 和 FFprobe。首次运行仍需要联网安装 PyTorch 和 Python 依赖。
 

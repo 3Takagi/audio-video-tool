@@ -37,6 +37,8 @@ Copy-Item -LiteralPath (Join-Path $Project "portable\start.bat") -Destination (J
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.ps1") -Destination (Join-Path $Stage "start.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\install.ps1") -Destination (Join-Path $Stage "install.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\slim.ps1") -Destination (Join-Path $Stage "slim.ps1")
+Copy-Item -LiteralPath (Join-Path $Project "portable\sync-backend.ps1") -Destination (Join-Path $Stage "sync-backend.ps1")
+Copy-Item -LiteralPath (Join-Path $Project "portable\AudioVideoTool.html") -Destination (Join-Path $Stage "AudioVideoTool.html")
 Copy-Item -LiteralPath (Join-Path $Project "portable\config.example.json") -Destination (Join-Path $Stage "config.example.json")
 Copy-Item -LiteralPath (Join-Path $Project "portable\README-PORTABLE.md") -Destination (Join-Path $Stage "README.md")
 
