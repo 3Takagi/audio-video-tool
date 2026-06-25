@@ -160,9 +160,6 @@ def parse_ytdlp_progress(job_id: str, line: str) -> None:
 
 
 def ytdlp_site_args(url: str) -> list[str]:
-    if "youtube.com" in url or "youtu.be" in url:
-        return ["--extractor-args", "youtube:player_client=web"]
-
     if "bilibili.com" not in url:
         return []
 
@@ -764,7 +761,13 @@ def run_ytdlp(job_id: str) -> None:
     if max_height is None:
         format_selector = f"{video_filter}+{audio_filter}/{fallback_filter}/bv*+ba/b"
     else:
-        format_selector = f"{video_filter}[height={max_height}]+{audio_filter}/{fallback_filter}[height={max_height}]/bv*[height={max_height}]+ba/b[height={max_height}]"
+        format_selector = (
+            f"{video_filter}[height<={max_height}]+{audio_filter}/"
+            f"{fallback_filter}[height<={max_height}]/"
+            f"bv*[height<={max_height}]+ba/"
+            f"b[height<={max_height}]/"
+            f"{video_filter}+{audio_filter}/{fallback_filter}/bv*+ba/b"
+        )
     cmd = [
         str(PYTHON),
         "-m",
