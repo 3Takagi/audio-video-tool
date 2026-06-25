@@ -11,6 +11,7 @@ import time
 import http.cookiejar
 from pathlib import Path
 from typing import Optional
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 from uuid import uuid4
 
 import psutil
@@ -159,6 +160,9 @@ def parse_ytdlp_progress(job_id: str, line: str) -> None:
 
 
 def ytdlp_site_args(url: str) -> list[str]:
+    if "youtube.com" in url or "youtu.be" in url:
+        return ["--extractor-args", "youtube:player_client=web"]
+
     if "bilibili.com" not in url:
         return []
 
@@ -176,6 +180,35 @@ def ytdlp_site_args(url: str) -> list[str]:
     elif BILIBILI_COOKIES.exists():
         args.extend(["--cookies", str(BILIBILI_COOKIES)])
     return args
+
+
+def clean_video_url(url: str) -> str:
+    parsed = urlparse(url.strip())
+    host = parsed.netloc.lower()
+    if "youtube.com" in host and parsed.path == "/watch":
+        video_id = parse_qs(parsed.query).get("v", [""])[0]
+        if video_id:
+            return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", urlencode({"v": video_id}), ""))
+    if "youtu.be" in host:
+        return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
+    return url.strip()
+
+
+def ytdlp_failure_message(stdout: str, stderr: str) -> str:
+    output = f"{stdout}\n{stderr}"
+    if "Video unavailable" in output:
+        return "视频不可用：可能已下架、地区受限、设为私密，或需要登录后才能观看。"
+    if "Sign in to confirm" in output or "This video may be inappropriate" in output:
+        return "需要登录验证：请在浏览器登录后再试，或导入 cookies。"
+    if "Could not copy Chrome cookie database" in output:
+        return "无法读取 Chrome cookies：请关闭 Chrome 后重试，或改用 cookies 文件。"
+    if "Requested format is not available" in output:
+        return "所选清晰度不可用：请改选“最高可用”或较低清晰度。"
+    if "Unsupported URL" in output:
+        return "链接不受支持：请确认链接来自 YouTube、bilibili 或 yt-dlp 支持的网站。"
+    if "HTTP Error 403" in output or "HTTP Error 429" in output:
+        return "请求被平台限制：可能需要稍后重试、登录账号或更换网络。"
+    return "yt-dlp 下载失败，请查看下方日志。"
 
 
 def parse_available_heights(text: str) -> list[int]:
@@ -770,7 +803,7 @@ def run_ytdlp(job_id: str) -> None:
             update_job(
                 job_id,
                 status="failed",
-                message="yt-dlp failed",
+                message=ytdlp_failure_message(result.stdout, result.stderr),
                 returncode=result.returncode,
                 stdout=result.stdout[-8000:],
                 stderr=result.stderr[-8000:],
@@ -1147,7 +1180,7 @@ async def create_download(
     quality: str = Form("best"),
     file_type: str = Form("mp4"),
 ) -> JSONResponse:
-    clean_url = url.strip()
+    clean_url = clean_video_url(url)
     if not clean_url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="请输入 http 或 https 开头的视频链接")
     if len(clean_url) > 2000:
