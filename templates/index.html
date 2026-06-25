@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>音视频工具</title>
-    <link rel="stylesheet" href="/static/style.css?v=20260626-glass-workbench-2" />
+    <link rel="stylesheet" href="/static/style.css?v=20260626-glass-workbench-3" />
   </head>
   <body data-theme="aurora">
     <main class="app-shell">
@@ -51,7 +51,15 @@
                 <h2>图片超分</h2>
                 <p>上传图片，选择模型和目标规格。</p>
               </div>
-              <span class="pane-badge">GPU</span>
+              <div class="pane-side">
+                <span class="pane-badge">GPU</span>
+                <div class="mini-dashboard">
+                  <span class="mini-chip">1K</span>
+                  <span class="mini-line wide"></span>
+                  <span class="mini-chip accent">4K</span>
+                  <span class="mini-line"></span>
+                </div>
+              </div>
             </div>
 
             <form id="job-form" class="form">
@@ -115,6 +123,15 @@
                 <h2>YouTube 视频下载</h2>
                 <p>粘贴链接，默认抓取最高可用画质。</p>
               </div>
+              <div class="pane-side">
+                <span class="pane-badge">BEST</span>
+                <div class="mini-dashboard">
+                  <span class="mini-chip">URL</span>
+                  <span class="mini-line wide"></span>
+                  <span class="mini-chip accent">2160P</span>
+                  <span class="mini-line"></span>
+                </div>
+              </div>
             </div>
 
             <form id="youtube-download-form" class="form">
@@ -156,6 +173,15 @@
                 <p class="eyebrow">BILIBILI</p>
                 <h2>bilibili 视频下载</h2>
                 <p>先抓登录状态，再下载账号可用规格。</p>
+              </div>
+              <div class="pane-side">
+                <span class="pane-badge">LOGIN</span>
+                <div class="mini-dashboard">
+                  <span class="mini-chip">COOKIE</span>
+                  <span class="mini-line wide"></span>
+                  <span class="mini-chip accent">4K</span>
+                  <span class="mini-line"></span>
+                </div>
               </div>
             </div>
 
@@ -210,6 +236,15 @@
                 <h2>视频封面下载</h2>
                 <p>提取任意 yt-dlp 支持链接的封面。</p>
               </div>
+              <div class="pane-side">
+                <span class="pane-badge">COVER</span>
+                <div class="mini-dashboard">
+                  <span class="mini-chip">JPG</span>
+                  <span class="mini-line wide"></span>
+                  <span class="mini-chip accent">WEBP</span>
+                  <span class="mini-line"></span>
+                </div>
+              </div>
             </div>
 
             <form id="thumbnail-form" class="form">
@@ -256,6 +291,6 @@
       </section>
     </main>
 
-    <script src="/static/app.js?v=20260626-glass-workbench-2"></script>
+    <script src="/static/app.js?v=20260626-glass-workbench-3"></script>
   </body>
 </html>
