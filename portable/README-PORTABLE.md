@@ -1,74 +1,97 @@
 # 音视频工具便携版
 
-这是一个本地网页工具。解压后在本机运行，浏览器访问 `http://127.0.0.1:7860/`。
+这是免安装的本地网页版。解压后运行：
+
+```text
+start.bat
+```
+
+浏览器会打开本机网页工具。如果端口 `7860` 被占用，程序会自动尝试 `7861`、`7862` 等端口，按命令行窗口显示的 URL 打开即可。
+
+`AudioVideoTool.html` 是快捷入口页。它不能启动 Python 后端，只能查找并跳转到已经运行中的本地服务。如果打不开，请先运行 `start.bat`。
 
 ## 功能
 
-- 图片超分：Real-ESRGAN
-- YouTube 视频下载：yt-dlp
-- bilibili 视频下载：yt-dlp + 本机 B站登录状态
-- 视频封面下载：yt-dlp
+- 图片超分：Real-ESRGAN，支持 1K、2K、4K 和自定义长边。
+- YouTube 视频下载：默认最高可用质量。
+- bilibili 视频下载：可使用本机登录状态。
+- 视频封面下载：提取常见视频链接封面。
 
 ## 首次运行
 
-1. 解压 ZIP。
-2. 如果想用桌面 App，双击 `AudioVideoTool-Desktop-Setup-0.1.0.exe` 安装。
-3. 如果想用便携版，双击 `start.bat`。
-4. 如果后端已经运行，也可以打开 `AudioVideoTool.html` 作为网页快捷入口。
-5. 第一次运行会自动调用 `install.ps1` 安装依赖。
-6. 安装窗口显示 `Install complete` 后，网页会自动打开。
-
-首次安装需要联网下载 PyTorch、Real-ESRGAN 依赖和少量模型文件。ZIP 本身较小，但安装完成后目录通常会增长到约 5 GB。
-
-桌面版和便携版共享同一个后端环境：
+首次运行会自动准备后端环境。环境默认位于：
 
 ```text
 %LocalAppData%\AudioVideoTool\backend
 ```
 
-因此 setup 版配置好环境后，再运行 `start.bat` 不会重复安装。
+便携版和桌面安装版共享这套环境。任意一种配置完成后，另一种会直接复用，不会重复下载。
 
-依赖会下载到当前文件夹：
+首次配置需要联网下载 Python 依赖、PyTorch 和 Real-ESRGAN 模型，可能耗时较长并占用数 GB 空间。配置完成后再次运行会显示跳过安装。
 
-- `runtime/venv`：Python 虚拟环境
-- `tools/Real-ESRGAN`：Real-ESRGAN 源码和模型
-- `tools/ffmpeg`：视频合并和媒体信息读取工具
-- `downloads`：输出文件
-- `config`：配置和 B站 cookies
-- `logs`：安装和服务日志
+## 文件说明
+
+- `start.bat`：便携版启动入口。
+- `AudioVideoTool.html`：已启动服务的快捷入口页。
+- `install.ps1`：首次安装依赖脚本。
+- `config/`：配置和 cookies。
+- `downloads/`：下载输出。
+- `logs/`：安装和服务日志。
 
 ## 注意
 
-- Real-ESRGAN 和 PyTorch 体积较大，首次安装会比较慢。
-- 首次安装时不要关闭命令行窗口；如果网络中断，重新双击 `start.bat` 会继续安装。
-- 便携包已内置 FFmpeg 和 FFprobe，用于合并高清音视频。
-- B站登录窗口需要本机安装 Chrome。
-- B站登录状态只保存在本机 `config/bilibili-cookies.txt`，不要把这个文件发给别人。
-- 公开视频下载服务涉及版权和平台条款风险，本项目默认定位是本机个人工具，不建议把 YouTube / bilibili 下载功能直接做成公网服务。
-- 如果启动失败，先查看 `logs/install.log` 或 `logs/server.err.log`。
+- 首次运行时不要关闭命令行窗口。
+- 如果网络中断，重新运行 `start.bat` 即可继续。
+- bilibili 高规格视频通常需要登录状态。
+- cookies 只应保存在本机，不要分享给别人。
+- 本工具默认用于本机个人使用，不建议直接部署成公开下载服务。
 
-## 修改端口
+---
 
-首次运行后会生成：
+# Audio Video Tool Portable
+
+This is the no-install local web version. After extracting the zip, run:
 
 ```text
-config/config.json
+start.bat
 ```
 
-可修改其中的：
+Your browser will open the local web UI. If port `7860` is busy, the tool automatically tries `7861`, `7862`, and so on. Open the URL printed in the command window.
 
-```json
-{
-  "port": 7860
-}
+`AudioVideoTool.html` is only a shortcut launcher page. It cannot start the Python backend by itself. It only finds and opens an already running local service. If it does not work, run `start.bat` first.
+
+## Features
+
+- Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets.
+- YouTube download: highest available quality by default.
+- bilibili download: can use local login state.
+- Thumbnail download: extracts thumbnails from common video links.
+
+## First Run
+
+The first launch prepares the backend runtime under:
+
+```text
+%LocalAppData%\AudioVideoTool\backend
 ```
 
-保存后重新启动 `start.bat`。
+The portable version and desktop installer share this environment. Once either one is configured, the other one reuses it and will not download everything again.
 
-## 重新安装依赖
+The first setup downloads Python dependencies, PyTorch, and Real-ESRGAN model files. It may take a while and use several GB of disk space. Later launches skip the install step when the runtime is ready.
 
-删除 `runtime/venv` 后重新运行：
+## Files
 
-```powershell
-powershell -ExecutionPolicy Bypass -File install.ps1
-```
+- `start.bat`: portable launcher.
+- `AudioVideoTool.html`: shortcut page for an already running service.
+- `install.ps1`: first-run dependency installer.
+- `config/`: configuration and cookies.
+- `downloads/`: output files.
+- `logs/`: install and service logs.
+
+## Notes
+
+- Do not close the command window during first setup.
+- If the network fails, run `start.bat` again to continue.
+- High-quality bilibili downloads usually require login state.
+- Keep cookies on your own computer only.
+- This tool is intended for local personal use, not as a public download service.
