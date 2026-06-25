@@ -20,13 +20,14 @@
 AudioVideoTool-Portable-Python.zip
 ```
 
-解压后双击：
+解压后可二选一：
 
 ```text
 start.bat
+AudioVideoTool-Desktop-Setup-0.1.0.exe
 ```
 
-首次运行会自动安装依赖。ZIP 本身约几十 MB，安装完成后目录通常会增长到约 5 GB，因为 PyTorch 和 Real-ESRGAN 依赖体积较大。
+`start.bat` 是便携版入口；`AudioVideoTool-Desktop-Setup-0.1.0.exe` 是桌面 App 安装器。首次运行会自动安装依赖。ZIP 安装完成后目录通常会增长到约 5 GB，因为 PyTorch 和 Real-ESRGAN 依赖体积较大。
 
 便携包内置 Python、Real-ESRGAN 源码、基础模型权重、FFmpeg 和 FFprobe。首次运行仍需要联网安装 PyTorch 和 Python 依赖。
 

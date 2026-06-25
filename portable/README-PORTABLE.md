@@ -12,9 +12,10 @@
 ## 首次运行
 
 1. 解压 ZIP。
-2. 双击 `start.bat`。
-3. 第一次运行会自动调用 `install.ps1` 安装依赖。
-4. 安装窗口显示 `Install complete` 后，网页会自动打开。
+2. 如果想用桌面 App，双击 `AudioVideoTool-Desktop-Setup-0.1.0.exe` 安装。
+3. 如果想用便携版，双击 `start.bat`。
+4. 第一次运行会自动调用 `install.ps1` 安装依赖。
+5. 安装窗口显示 `Install complete` 后，网页会自动打开。
 
 首次安装需要联网下载 PyTorch、Real-ESRGAN 依赖和少量模型文件。ZIP 本身较小，但安装完成后目录通常会增长到约 5 GB。
 
