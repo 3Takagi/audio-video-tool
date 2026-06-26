@@ -1,0 +1,122 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Audio Video Tool | 本地音视频处理工具作品集</title>
+  <meta name="description" content="Audio Video Tool 是一个集成图片超分、视频下载、封面提取、桌面端打包和便携版发行的本地音视频处理工具。">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">LOCAL MEDIA WORKBENCH</p>
+        <h1>Audio Video Tool<br><span>本地音视频处理工具</span></h1>
+        <p class="lead">把图片超分、视频下载、B站登录状态和封面提取整合进一个本地工作台，并交付为桌面安装包与便携版。</p>
+        <div class="actions">
+          <a class="button primary" href="https://github.com/3Takagi/audio-video-tool" target="_blank" rel="noreferrer">GitHub 仓库</a>
+          <a class="button" href="https://github.com/3Takagi/audio-video-tool/releases/tag/v0.1.0" target="_blank" rel="noreferrer">Release 下载</a>
+        </div>
+      </div>
+      <div class="hero-card">
+        <img src="assets/interface.png" alt="Audio Video Tool 主界面截图">
+      </div>
+    </section>
+
+    <section class="stats" aria-label="项目概览">
+      <div><strong>4</strong><span>个核心工作区</span></div>
+      <div><strong>2</strong><span>种发行方式</span></div>
+      <div><strong>1K-4K</strong><span>目标超分规格</span></div>
+      <div><strong>Windows</strong><span>本地运行环境</span></div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <p class="eyebrow">PRODUCT SCOPE</p>
+        <h2>从模型调用到可交付工具</h2>
+        <p>项目重点是将 Real-ESRGAN、yt-dlp、FFmpeg 等命令行能力封装为普通用户可以直接操作的产品界面。</p>
+      </div>
+      <div class="feature-grid">
+        <article class="feature-card">
+          <span class="tag blue">IMAGE</span>
+          <h3>图片超分</h3>
+          <p>支持 1K、2K、4K 和自定义长边，提供插画、动画帧、照片截图等模型场景。</p>
+        </article>
+        <article class="feature-card">
+          <span class="tag pink">VIDEO</span>
+          <h3>YouTube / bilibili 下载</h3>
+          <p>封装 yt-dlp 与 FFmpeg，默认选择最高可用画质，并保留格式与清晰度控制。</p>
+        </article>
+        <article class="feature-card">
+          <span class="tag cyan">THUMBNAIL</span>
+          <h3>视频封面提取</h3>
+          <p>统一链接输入和任务状态反馈，直接输出可下载封面文件。</p>
+        </article>
+        <article class="feature-card">
+          <span class="tag orange">DELIVERY</span>
+          <h3>桌面端与便携版</h3>
+          <p>Electron 桌面安装包与便携版 zip 共用本地后端运行时，降低跨电脑部署成本。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section split">
+      <div>
+        <p class="eyebrow">VISUAL RESULT</p>
+        <h2>超分前后局部对比</h2>
+        <p>作品展示使用局部截图呈现视觉结果，避免在附件中放入体积过大的原始 4K 图片。</p>
+        <ul class="clean-list">
+          <li>Real-ESRGAN 本地推理</li>
+          <li>保留原图命名语义，输出为原图_4k</li>
+          <li>处理 Windows 中文与日文路径读取问题</li>
+        </ul>
+      </div>
+      <figure class="media-frame">
+        <img src="assets/comparison.png" alt="图片超分前后局部对比">
+      </figure>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <p class="eyebrow">INTERFACE</p>
+        <h2>清晰分区的本地工作台</h2>
+        <p>界面按任务类型拆分，右侧任务状态区集中展示进度、日志、失败原因和下载结果。</p>
+      </div>
+      <div class="showcase">
+        <figure><img src="assets/upscale.png" alt="图片超分界面"><figcaption>图片超分</figcaption></figure>
+        <figure><img src="assets/youtube.png" alt="YouTube 下载界面"><figcaption>YouTube 下载</figcaption></figure>
+        <figure><img src="assets/bilibili.png" alt="bilibili 下载界面"><figcaption>bilibili 下载</figcaption></figure>
+        <figure><img src="assets/thumbnail.png" alt="视频封面下载界面"><figcaption>封面提取</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="section split reverse">
+      <figure class="media-frame">
+        <img src="assets/architecture.png" alt="Audio Video Tool 工程架构图">
+      </figure>
+      <div>
+        <p class="eyebrow">ENGINEERING</p>
+        <h2>工程架构与兼容性处理</h2>
+        <p>后端以 FastAPI 管理任务，前端负责交互和状态展示，处理引擎由 Real-ESRGAN、yt-dlp 与 FFmpeg 组成。</p>
+        <ul class="clean-list">
+          <li>端口占用检测与本地服务启动</li>
+          <li>依赖安装标记与重复安装跳过</li>
+          <li>中文、日文文件名的 Real-ESRGAN 输入路径兼容</li>
+          <li>GitHub Release 发布桌面安装包与便携版 zip</li>
+        </ul>
+      </div>
+    </section>
+
+    <section class="section final">
+      <p class="eyebrow">DELIVERABLES</p>
+      <h2>可下载、可安装、可独立展示</h2>
+      <p>项目以代码仓库、Release 资产和作品集网页共同呈现。仓库用于查看实现，Release 用于获取可运行版本，本页面用于快速理解项目价值。</p>
+      <div class="release-list">
+        <a href="https://github.com/3Takagi/audio-video-tool/releases/download/v0.1.0/AudioVideoTool-Desktop-Setup-0.1.0.exe">AudioVideoTool-Desktop-Setup-0.1.0.exe</a>
+        <a href="https://github.com/3Takagi/audio-video-tool/releases/download/v0.1.0/AudioVideoTool-Portable-Python.zip">AudioVideoTool-Portable-Python.zip</a>
+      </div>
+    </section>
+  </main>
+</body>
+</html>

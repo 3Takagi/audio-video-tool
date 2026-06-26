@@ -9,6 +9,7 @@ logs/
 
 # Build artifacts and packaged releases
 dist/
+portfolio/
 *.zip
 *.7z
 *.exe

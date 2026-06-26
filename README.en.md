@@ -1,8 +1,22 @@
 # Audio Video Tool
 
-[中文](README.md) | [English](README.en.md)
+[中文](README.md) | [English](README.en.md) | [Portfolio Page](docs/index.html)
 
-Audio Video Tool is a Windows local media toolbox for image upscaling, YouTube downloads, bilibili downloads, and video thumbnail extraction.
+Audio Video Tool is a Windows local media toolbox for image upscaling, YouTube downloads, bilibili downloads, and video thumbnail extraction. It ships as both a desktop installer and a portable zip package.
+
+![Audio Video Tool interface](docs/assets/interface.png)
+
+## Portfolio
+
+The standalone project portfolio page is available at:
+
+[docs/index.html](docs/index.html)
+
+It presents the product scope, core workflows, before-and-after upscaling result, engineering architecture, and release deliverables.
+
+![Portfolio page preview](docs/assets/portfolio-preview.png)
+
+![Upscaling comparison](docs/assets/comparison.png)
 
 ## Download
 
@@ -22,6 +36,8 @@ You do not need to download both. The desktop installer does not require the por
 - bilibili download: can use local browser login state for account-available streams.
 - Thumbnail download: extracts thumbnails from yt-dlp supported links.
 - Job controls: progress display, pause, resume, cancel, and result download.
+
+![Engineering architecture](docs/assets/architecture.png)
 
 ## Desktop Installer
 
@@ -166,6 +182,7 @@ dist\AudioVideoTool-Desktop-Setup-0.1.0.exe
 - `app.py`: FastAPI backend.
 - `templates/`: main web UI templates.
 - `static/`: frontend scripts, styles, and logo.
+- `docs/`: static portfolio page.
 - `portable/`: portable launcher, installer, HTML entry page, and packaging scripts.
 - `desktop/`: Electron desktop app shell.
 - `dist/`: local release outputs, not committed to Git.
