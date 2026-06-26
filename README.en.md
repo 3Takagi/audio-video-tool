@@ -1,6 +1,6 @@
 # Audio Video Tool
 
-[中文](README.md) | [English](README.en.md) | [Portfolio Page](docs/index.html)
+[中文](README.md) | [English](README.en.md) | [Live Portfolio](https://3takagi.github.io/audio-video-tool/)
 
 Audio Video Tool is a Windows local media toolbox for image upscaling, YouTube downloads, bilibili downloads, and video thumbnail extraction. It ships as both a desktop installer and a portable zip package.
 
@@ -10,7 +10,9 @@ Audio Video Tool is a Windows local media toolbox for image upscaling, YouTube d
 
 The standalone project portfolio page is available at:
 
-[docs/index.html](docs/index.html)
+[https://3takagi.github.io/audio-video-tool/](https://3takagi.github.io/audio-video-tool/)
+
+The source file is available at [docs/index.html](docs/index.html).
 
 It presents the product scope, core workflows, before-and-after upscaling result, engineering architecture, and release deliverables.
 
