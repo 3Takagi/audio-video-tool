@@ -1,22 +1,22 @@
 # 音视频工具
 
-[中文](README.md) | [English](README.en.md) | [在线作品集](https://3takagi.github.io/audio-video-tool/)
+[中文](README.md) | [English](README.en.md) | [效果展示](https://3takagi.github.io/audio-video-tool/)
 
 音视频工具是一个运行在 Windows 本地的媒体处理工具，集成图片超分、YouTube 视频下载、bilibili 视频下载和视频封面提取。项目提供桌面安装包和便携版 zip，适合以本地个人工具的方式使用。
 
 ![音视频工具主界面](docs/assets/interface.png)
 
-## 作品集展示
+## 效果展示
 
-项目作品集页面位于：
+项目效果展示页面位于：
 
 [https://3takagi.github.io/audio-video-tool/](https://3takagi.github.io/audio-video-tool/)
 
 源码文件位于 [docs/index.html](docs/index.html)。
 
-该页面可作为独立作品介绍页使用，包含项目定位、核心功能、超分前后对比、工程架构和交付方式。
+该页面包含项目定位、核心功能、超分前后对比、工程架构和交付方式。
 
-![作品集页面预览](docs/assets/portfolio-preview.png)
+![效果展示页面预览](docs/assets/showcase-preview.png)
 
 ![超分前后对比](docs/assets/comparison.png)
 
@@ -184,7 +184,7 @@ dist\AudioVideoTool-Desktop-Setup-0.1.0.exe
 - `app.py`：FastAPI 后端。
 - `templates/`：主网页模板。
 - `static/`：前端脚本、样式和 Logo。
-- `docs/`：作品集静态网页。
+- `docs/`：效果展示静态网页。
 - `portable/`：便携版启动、安装、入口页和打包脚本。
 - `desktop/`：Electron 桌面 App。
 - `dist/`：本地生成的发布文件，不提交到 Git。
