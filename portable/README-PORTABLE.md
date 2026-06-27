@@ -33,9 +33,32 @@ start.bat
 
 首次配置需要联网下载 Python 依赖、PyTorch 和 Real-ESRGAN 模型，可能耗时较长并占用数 GB 空间。配置完成后再次运行会显示跳过安装。
 
+也可以把共享后端环境放到其他盘：
+
+```powershell
+start.bat -InstallRoot E:\AudioVideoTool
+```
+
+选择的位置会保存到：
+
+```text
+%LocalAppData%\AudioVideoTool\install-location.json
+```
+
+### 更新方式
+
+新版 zip 解压到任意目录后，运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File update.ps1
+```
+
+它只更新程序文件，不会删除已有 Python 环境、模型、配置、cookies、下载结果和日志。
+
 ### 文件说明
 
 - `start.bat`：便携版启动入口。
+- `update.ps1`：从新版包同步程序文件，不删除运行时数据。
 - `AudioVideoTool.html`：已启动服务的快捷入口页。
 - `install.ps1`：首次安装依赖脚本。
 - `config/`：配置和 cookies。
@@ -81,9 +104,32 @@ The portable version and desktop installer share this environment. Once either o
 
 The first setup downloads Python dependencies, PyTorch, and Real-ESRGAN model files. It may take a while and use several GB of disk space. Later launches skip the install step when the runtime is ready.
 
+You can place the shared backend on another drive:
+
+```powershell
+start.bat -InstallRoot E:\AudioVideoTool
+```
+
+The selected backend location is saved to:
+
+```text
+%LocalAppData%\AudioVideoTool\install-location.json
+```
+
+### Updates
+
+When a new zip is released, extract it anywhere and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File update.ps1
+```
+
+This updates app files only. Your Python runtime, models, config, cookies, downloads, and logs are preserved.
+
 ### Files
 
 - `start.bat`: portable launcher.
+- `update.ps1`: syncs app files from a newer package without deleting runtime data.
 - `AudioVideoTool.html`: shortcut page for an already running service.
 - `install.ps1`: first-run dependency installer.
 - `config/`: configuration and cookies.

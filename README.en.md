@@ -34,7 +34,7 @@ You do not need to download both. The desktop installer does not require the por
 ## Features
 
 - Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets.
-- YouTube download: yt-dlp based, highest available quality by default, with optional quality ceilings.
+- YouTube download: yt-dlp based, highest available quality by default, with optional quality ceilings and playlist item selection; multiple results are delivered as a ZIP.
 - bilibili download: can use local browser login state for account-available streams.
 - Thumbnail download: extracts thumbnails from yt-dlp supported links.
 - Job controls: progress display, pause, resume, cancel, and result download.
@@ -90,6 +90,30 @@ C:\Users\Tom\AppData\Local\AudioVideoTool\backend
 The desktop installer and portable version share this backend runtime. Once either version finishes setup, the other version reuses it and will not download everything again.
 
 The first setup may download Python packages, PyTorch, and Real-ESRGAN model files. It can take a while and may use several GB of disk space. Later launches skip the install step when the runtime is ready.
+
+On first launch, the desktop installer asks where the shared backend should be stored. You can use the default location or choose a drive with more free space. The portable package supports the same option:
+
+```powershell
+start.bat -InstallRoot E:\AudioVideoTool
+```
+
+The selected location is stored in:
+
+```text
+%LocalAppData%\AudioVideoTool\install-location.json
+```
+
+Both desktop and portable versions reuse that location afterward.
+
+## Updating
+
+You do not need to delete an existing runtime. Extract the new zip anywhere and run:
+
+```powershell
+powershell -ExecutionPolicy Bypass -File update.ps1
+```
+
+This syncs application files while preserving the Python runtime, models, configuration, cookies, downloads, and logs. The desktop installer also synchronizes its bundled backend files when it starts.
 
 ## Ports
 

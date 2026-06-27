@@ -15,6 +15,7 @@ const statusBox = document.querySelector("#status");
 const meta = document.querySelector("#meta");
 const download = document.querySelector("#download");
 const saveAs = document.querySelector("#save-as");
+const openFolder = document.querySelector("#open-folder");
 const jobActions = document.querySelector("#job-actions");
 const pauseJob = document.querySelector("#pause-job");
 const resumeJob = document.querySelector("#resume-job");
@@ -25,6 +26,15 @@ const progressPercent = document.querySelector("#progress-percent");
 const progressBar = document.querySelector("#progress-bar");
 const target = document.querySelector("#target");
 const customTargetWrap = document.querySelector("#custom-target-wrap");
+const youtubePlaylist = document.querySelector("#youtube-playlist");
+const youtubeUrlInput = youtubeDownloadForm?.querySelector("input[name='url']");
+const youtubePlaylistPreview = document.querySelector("#youtube-playlist-preview");
+const youtubePlaylistItems = document.querySelector("#youtube-playlist-items");
+const youtubePlaylistPicker = document.querySelector("#youtube-playlist-picker");
+const youtubePlaylistTitle = document.querySelector("#youtube-playlist-title");
+const youtubePlaylistList = document.querySelector("#youtube-playlist-list");
+const youtubePlaylistSelectAll = document.querySelector("#youtube-playlist-select-all");
+const youtubePlaylistClear = document.querySelector("#youtube-playlist-clear");
 const tabButtons = document.querySelectorAll(".tab-button");
 const toolPanes = document.querySelectorAll("[data-panel]");
 const themeButtons = document.querySelectorAll(".theme-dot");
@@ -33,6 +43,8 @@ let pollTimer = null;
 let currentJobId = null;
 let currentDownloadUrl = null;
 let currentDownloadName = "result.png";
+let savedFilePath = null;
+let playlistPreviewEntries = [];
 
 function activatePane(id) {
   tabButtons.forEach((button) => {
@@ -77,6 +89,58 @@ if (target && customTargetWrap) {
   });
 }
 
+function selectedPlaylistItems() {
+  if (!youtubePlaylistList) return [];
+  return Array.from(youtubePlaylistList.querySelectorAll("input[type='checkbox']:checked"))
+    .map((input) => Number(input.value))
+    .filter((value) => Number.isInteger(value) && value > 0);
+}
+
+function syncPlaylistItems() {
+  if (!youtubePlaylistItems) return;
+  youtubePlaylistItems.value = selectedPlaylistItems().join(",");
+}
+
+function resetPlaylistPicker() {
+  playlistPreviewEntries = [];
+  if (youtubePlaylistItems) youtubePlaylistItems.value = "";
+  youtubePlaylistPicker?.classList.add("hidden");
+  if (youtubePlaylistList) youtubePlaylistList.innerHTML = "";
+}
+
+function renderPlaylistPicker(data) {
+  playlistPreviewEntries = data.entries || [];
+  if (youtubePlaylistTitle) {
+    const suffix = data.truncated ? `（前 ${data.max_items} 个）` : `（${playlistPreviewEntries.length} 个）`;
+    youtubePlaylistTitle.textContent = `${data.title || "播放列表"}${suffix}`;
+  }
+  if (youtubePlaylistList) {
+    youtubePlaylistList.innerHTML = playlistPreviewEntries.map((entry) => {
+      const title = escapeHtml(entry.title || `视频 ${entry.index}`);
+      const uploader = entry.uploader ? `<span>${escapeHtml(entry.uploader)}</span>` : "";
+      return `<label class="playlist-item">
+        <input type="checkbox" value="${entry.index}" checked />
+        <span class="playlist-index">${entry.index}</span>
+        <span class="playlist-title">${title}${uploader}</span>
+      </label>`;
+    }).join("");
+    youtubePlaylistList.querySelectorAll("input[type='checkbox']").forEach((input) => {
+      input.addEventListener("change", syncPlaylistItems);
+    });
+  }
+  youtubePlaylistPicker?.classList.remove("hidden");
+  syncPlaylistItems();
+}
+
+if (youtubePlaylist) {
+  youtubePlaylist.addEventListener("change", () => {
+    youtubePlaylistPreview?.classList.toggle("hidden", !youtubePlaylist.checked);
+    if (!youtubePlaylist.checked) resetPlaylistPicker();
+  });
+}
+
+youtubeUrlInput?.addEventListener("input", resetPlaylistPicker);
+
 function setStatus(text, cls = "idle") {
   statusBox.className = `status ${cls}`;
   statusBox.textContent = text;
@@ -96,6 +160,7 @@ function resetButtons() {
 function resetResult() {
   download.classList.add("hidden");
   saveAs.classList.add("hidden");
+  openFolder?.classList.add("hidden");
   jobActions.classList.add("hidden");
   progressWrap.classList.add("hidden");
   progressWrap.classList.remove("active", "paused", "done", "failed");
@@ -106,6 +171,7 @@ function resetResult() {
   currentJobId = null;
   currentDownloadUrl = null;
   currentDownloadName = "result.png";
+  savedFilePath = null;
   if (pollTimer) {
     clearInterval(pollTimer);
     pollTimer = null;
@@ -223,14 +289,19 @@ function renderJob(job) {
     if (job.url) lines.push(`链接：${job.url}`);
     if (job.quality) lines.push(`质量：${qualityLabel(job.quality)}`);
     if (job.file_type) lines.push(`类型：${typeLabel(job.file_type)}`);
+    if (job.playlist) lines.push(`播放列表：已选 ${(job.playlist_items || []).length} 个`);
+    if (job.playlist && job.output_count) lines.push(`已完成：${job.output_count} 个视频（ZIP）`);
     if (job.output_filename) lines.push(`文件：${job.output_filename}`);
+    if (job.output_size_label) lines.push(`体积：${job.output_size_label}`);
   } else if (job.kind === "thumbnail") {
     if (job.url) lines.push(`链接：${job.url}`);
     if (job.output_filename) lines.push(`封面：${job.output_filename}`);
+    if (job.output_size_label) lines.push(`体积：${job.output_size_label}`);
   } else {
     if (job.filename) lines.push(`文件：${job.filename}`);
     if (job.input_width) lines.push(`输入：${job.input_width} x ${job.input_height}`);
     if (job.output_width) lines.push(`输出：${job.output_width} x ${job.output_height}`);
+    if (job.output_size_label) lines.push(`体积：${job.output_size_label}`);
     if (job.model_name) lines.push(`模型：${job.model_name}`);
     if (job.target) lines.push(`目标：${job.target}`);
     if (job.scale) lines.push(`实际倍率：${job.scale}x`);
@@ -246,6 +317,7 @@ function renderJob(job) {
     download.download = currentDownloadName;
     download.classList.remove("hidden");
     saveAs.classList.remove("hidden");
+    openFolder?.classList.add("hidden");
     clearInterval(pollTimer);
     pollTimer = null;
     resetButtons();
@@ -295,6 +367,37 @@ async function submitTask(taskForm, endpoint, button, startingText) {
   await startPolling(jobId);
 }
 
+async function previewYoutubePlaylist() {
+  if (!youtubeDownloadForm || !youtubePlaylistPreview) return;
+  const url = new FormData(youtubeDownloadForm).get("url");
+  if (!url) {
+    setStatus("请先粘贴播放列表链接", "failed");
+    return;
+  }
+  setBusy(youtubePlaylistPreview, true);
+  const originalText = youtubePlaylistPreview.textContent;
+  youtubePlaylistPreview.textContent = "解析中";
+  try {
+    const body = new FormData();
+    body.set("url", url);
+    const res = await fetch("/api/playlists/preview", { method: "POST", body });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok || data.ok === false) {
+      setStatus(data.detail || data.message || "播放列表解析失败", "failed");
+      resetPlaylistPicker();
+      return;
+    }
+    renderPlaylistPicker(data);
+    setStatus("播放列表已解析，请选择要下载的视频", "done");
+  } catch (error) {
+    setStatus("播放列表解析失败", "failed");
+    resetPlaylistPicker();
+  } finally {
+    youtubePlaylistPreview.textContent = originalText;
+    setBusy(youtubePlaylistPreview, false);
+  }
+}
+
 async function controlJob(action) {
   if (!currentJobId) return;
   const res = await fetch(`/api/jobs/${currentJobId}/${action}`, { method: "POST" });
@@ -316,9 +419,32 @@ if (form) {
 if (youtubeDownloadForm) {
   youtubeDownloadForm.addEventListener("submit", async (event) => {
     event.preventDefault();
+    if (youtubePlaylist?.checked) {
+      syncPlaylistItems();
+      if (!youtubePlaylistItems?.value) {
+        setStatus("请先解析播放列表并选择视频", "failed");
+        return;
+      }
+    }
     await submitTask(youtubeDownloadForm, "/api/downloads", youtubeDownloadSubmit, "提交 YouTube 下载任务");
   });
 }
+
+youtubePlaylistPreview?.addEventListener("click", previewYoutubePlaylist);
+
+youtubePlaylistSelectAll?.addEventListener("click", () => {
+  youtubePlaylistList?.querySelectorAll("input[type='checkbox']").forEach((input) => {
+    input.checked = true;
+  });
+  syncPlaylistItems();
+});
+
+youtubePlaylistClear?.addEventListener("click", () => {
+  youtubePlaylistList?.querySelectorAll("input[type='checkbox']").forEach((input) => {
+    input.checked = false;
+  });
+  syncPlaylistItems();
+});
 
 if (bilibiliDownloadForm) {
   bilibiliDownloadForm.addEventListener("submit", async (event) => {
@@ -351,8 +477,34 @@ if (pauseJob) pauseJob.addEventListener("click", () => controlJob("pause"));
 if (resumeJob) resumeJob.addEventListener("click", () => controlJob("resume"));
 if (cancelJob) cancelJob.addEventListener("click", () => controlJob("cancel"));
 
+openFolder?.addEventListener("click", async () => {
+  if (!savedFilePath || !window.audioVideoTool?.showSavedFile) return;
+  try {
+    await window.audioVideoTool.showSavedFile(savedFilePath);
+  } catch (error) {
+    setStatus("打开保存位置失败", "failed");
+  }
+});
+
 saveAs?.addEventListener("click", async () => {
   if (!currentDownloadUrl) return;
+
+  if (window.audioVideoTool?.saveFile) {
+    try {
+      const result = await window.audioVideoTool.saveFile({
+        suggestedName: currentDownloadName,
+        downloadUrl: currentDownloadUrl,
+      });
+      if (result?.canceled) return;
+      savedFilePath = result.filePath;
+      openFolder?.classList.toggle("hidden", !savedFilePath);
+      setStatus("已保存", "done");
+      return;
+    } catch (error) {
+      setStatus("保存失败，已保留下载按钮", "failed");
+      return;
+    }
+  }
 
   const response = await fetch(currentDownloadUrl);
   if (!response.ok) {
@@ -369,6 +521,8 @@ saveAs?.addEventListener("click", async () => {
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      savedFilePath = null;
+      openFolder?.classList.add("hidden");
       setStatus("已保存", "done");
       return;
     } catch (error) {
@@ -386,6 +540,9 @@ saveAs?.addEventListener("click", async () => {
   link.click();
   link.remove();
   URL.revokeObjectURL(objectUrl);
+  savedFilePath = null;
+  openFolder?.classList.add("hidden");
+  setStatus("已交给浏览器下载", "done");
 });
 
 refreshBilibiliAuthStatus();

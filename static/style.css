@@ -445,6 +445,117 @@ label span {
   font-weight: 900;
 }
 
+.check-row {
+  display: flex;
+  min-height: 46px;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 0 13px;
+  border: 1px solid rgba(255,255,255,.76);
+  border-radius: 15px;
+  background: rgba(255,255,255,.5);
+}
+
+.check-row span {
+  margin: 0;
+}
+
+.check-row input {
+  width: 18px;
+  height: 18px;
+  margin: 0;
+}
+
+.playlist-picker {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid rgba(255,255,255,.72);
+  border-radius: 16px;
+  background: rgba(255,255,255,.5);
+}
+
+.playlist-picker-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.playlist-picker-head strong {
+  min-width: 0;
+  color: #223047;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.playlist-picker-head div {
+  display: flex;
+  flex: 0 0 auto;
+  gap: 8px;
+}
+
+.mini-action {
+  width: auto;
+  min-width: 72px;
+  height: 34px;
+  padding: 0 10px;
+  background: rgba(255,255,255,.72);
+  color: var(--accent);
+  box-shadow: none;
+  font-size: 13px;
+}
+
+.playlist-list {
+  display: grid;
+  gap: 8px;
+  max-height: 260px;
+  overflow: auto;
+  padding-right: 4px;
+}
+
+.playlist-item {
+  display: grid;
+  grid-template-columns: 20px 34px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid rgba(20,31,44,.08);
+  border-radius: 12px;
+  background: rgba(255,255,255,.56);
+}
+
+.playlist-item input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+}
+
+.playlist-index {
+  margin: 0;
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 950;
+}
+
+.playlist-title {
+  margin: 0;
+  color: #253247;
+  font-size: 13px;
+  font-weight: 820;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.playlist-title span {
+  display: block;
+  margin: 3px 0 0;
+  color: #6b778c;
+  font-size: 12px;
+  font-weight: 720;
+}
+
 .dropzone {
   min-height: 136px;
   display: grid;
@@ -717,7 +828,8 @@ pre {
   box-shadow: 0 14px 26px color-mix(in srgb, var(--accent) 24%, transparent);
 }
 
-.save-as {
+.save-as,
+.open-folder {
   margin-top: 10px;
   background: rgba(255,255,255,.66);
   color: var(--accent);

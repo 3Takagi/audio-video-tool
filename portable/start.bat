@@ -9,7 +9,7 @@ if errorlevel 1 (
   exit /b 1
 )
 
-powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0start.ps1" %*
 if errorlevel 1 (
   pause
   exit /b 1

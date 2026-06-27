@@ -9,6 +9,7 @@ import sys
 import threading
 import time
 import http.cookiejar
+import zipfile
 from pathlib import Path
 from typing import Optional
 from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
@@ -103,6 +104,7 @@ YTDLP_QUALITIES = {
     "480p": 480,
 }
 YTDLP_TYPES = {"mp4", "mkv", "webm"}
+MAX_PLAYLIST_ITEMS = 100
 
 app = FastAPI(title="Local Image Upscaler")
 app.mount("/static", StaticFiles(directory=APP_DIR / "static"), name="static")
@@ -189,6 +191,35 @@ def clean_video_url(url: str) -> str:
     if "youtu.be" in host:
         return urlunparse((parsed.scheme, parsed.netloc, parsed.path, "", "", ""))
     return url.strip()
+
+
+def is_youtube_playlist_url(url: str) -> bool:
+    parsed = urlparse(url.strip())
+    host = parsed.netloc.lower()
+    if "youtube.com" not in host and "youtu.be" not in host:
+        return False
+    query = parse_qs(parsed.query)
+    return bool(query.get("list")) and not query.get("v")
+
+
+def parse_playlist_items(value: str | None) -> list[int]:
+    if not value:
+        return []
+    items = []
+    for part in value.split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if not part.isdigit():
+            raise HTTPException(status_code=400, detail="播放列表选择项无效")
+        index = int(part)
+        if index < 1:
+            raise HTTPException(status_code=400, detail="播放列表选择项无效")
+        items.append(index)
+    unique_items = sorted(set(items))
+    if len(unique_items) > MAX_PLAYLIST_ITEMS:
+        raise HTTPException(status_code=400, detail=f"一次最多选择 {MAX_PLAYLIST_ITEMS} 个视频")
+    return unique_items
 
 
 def ytdlp_failure_message(stdout: str, stderr: str) -> str:
@@ -580,6 +611,21 @@ def unique_path(path: Path) -> Path:
     raise HTTPException(status_code=500, detail="Could not create a unique output filename")
 
 
+def file_size_label(size: int | None) -> str:
+    if size is None:
+        return ""
+    units = ["B", "KB", "MB", "GB", "TB"]
+    value = float(size)
+    unit = units[0]
+    for unit in units:
+        if value < 1024 or unit == units[-1]:
+            break
+        value /= 1024
+    if unit == "B":
+        return f"{int(value)} B"
+    return f"{value:.1f} {unit}"
+
+
 def find_output_file(output_dir: Path, input_path: Path, suffix: str, ext: str) -> Path | None:
     expected = output_dir / output_name(input_path, suffix, ext)
     if expected.exists():
@@ -611,6 +657,30 @@ def newest_downloaded_file(download_dir: Path, before: set[str], started_at: flo
     if not candidates:
         return None
     return max(candidates, key=lambda item: item.stat().st_mtime)
+
+
+def downloaded_media_files(
+    download_dir: Path,
+    before: set[str],
+    started_at: float,
+) -> list[Path]:
+    media_extensions = {".mp4", ".mkv", ".webm", ".mp3", ".m4a", ".opus", ".ogg", ".wav", ".flac"}
+    candidates = []
+    for path in download_dir.iterdir():
+        if not path.is_file() or path.suffix.lower() not in media_extensions:
+            continue
+        resolved = str(path.resolve())
+        if resolved not in before or path.stat().st_mtime >= started_at - 2:
+            candidates.append(path)
+    return sorted(candidates, key=lambda item: (item.stat().st_mtime, item.name.lower()))
+
+
+def create_playlist_archive(output_dir: Path, files: list[Path]) -> Path:
+    archive = unique_path(output_dir / f"YouTube_playlist_{len(files)}_videos.zip")
+    with zipfile.ZipFile(archive, "w", compression=zipfile.ZIP_STORED) as bundle:
+        for path in files:
+            bundle.write(path, arcname=path.name)
+    return archive
 
 
 def compute_scale(width: int, height: int, target: str, custom_long_edge: Optional[int], legacy_scale: Optional[float]) -> tuple[float, str, str]:
@@ -737,6 +807,7 @@ def run_upscale(job_id: str) -> None:
             output_path=str(out_file),
             internal_output_path=str(out_file),
             output_filename=out_file.name,
+            output_size_bytes=out_file.stat().st_size,
             output_width=width,
             output_height=height,
             returncode=result.returncode,
@@ -799,7 +870,6 @@ def run_ytdlp(job_id: str) -> None:
         "--windows-filenames",
         "--newline",
         "--no-mtime",
-        "--no-playlist",
         "--write-thumbnail",
         "--convert-thumbnails",
         "jpg",
@@ -807,6 +877,11 @@ def run_ytdlp(job_id: str) -> None:
         "--embed-metadata",
         *ytdlp_site_args(data["url"]),
     ]
+    if data.get("playlist"):
+        items = ",".join(str(item) for item in data.get("playlist_items", []))
+        cmd.extend(["--yes-playlist", "--playlist-items", items])
+    else:
+        cmd.append("--no-playlist")
     cmd.append(data["url"])
 
     try:
@@ -819,8 +894,11 @@ def run_ytdlp(job_id: str) -> None:
         )
         if job_is_canceled(job_id):
             return
-        out_file = newest_downloaded_file(output_dir, before, started_at)
-        if result.returncode != 0 or out_file is None:
+        downloaded_files = downloaded_media_files(output_dir, before, started_at)
+        out_file = downloaded_files[-1] if downloaded_files else None
+        if data.get("playlist") and downloaded_files:
+            out_file = create_playlist_archive(output_dir, downloaded_files)
+        if out_file is None or (result.returncode != 0 and not data.get("playlist")):
             update_job(
                 job_id,
                 status="failed",
@@ -840,6 +918,8 @@ def run_ytdlp(job_id: str) -> None:
             output_path=str(out_file),
             internal_output_path=str(out_file),
             output_filename=out_file.name,
+            output_size_bytes=out_file.stat().st_size,
+            output_count=len(downloaded_files),
             returncode=result.returncode,
             stdout=result.stdout[-8000:],
             stderr=result.stderr[-8000:],
@@ -908,6 +988,7 @@ def run_ytdlp_thumbnail(job_id: str) -> None:
             output_path=str(out_file),
             internal_output_path=str(out_file),
             output_filename=out_file.name,
+            output_size_bytes=out_file.stat().st_size,
             returncode=result.returncode,
             stdout=result.stdout[-8000:],
             stderr=result.stderr[-8000:],
@@ -1118,6 +1199,77 @@ async def check_bilibili_formats(url: str = Form(...)) -> JSONResponse:
     )
 
 
+@app.post("/api/playlists/preview")
+async def preview_playlist(url: str = Form(...)) -> JSONResponse:
+    clean_url = url.strip()
+    if not clean_url.startswith(("http://", "https://")):
+        raise HTTPException(status_code=400, detail="请输入 http 或 https 开头的播放列表链接")
+
+    cmd = [
+        str(PYTHON),
+        "-m",
+        "yt_dlp",
+        "--flat-playlist",
+        "--dump-single-json",
+        "--ignore-errors",
+        *ytdlp_site_args(clean_url),
+        clean_url,
+    ]
+    result = subprocess.run(
+        cmd,
+        cwd=str(APP_DIR),
+        text=True,
+        capture_output=True,
+        encoding="utf-8",
+        errors="replace",
+        timeout=90,
+        check=False,
+    )
+    output = f"{result.stdout}\n{result.stderr}".strip()
+    if result.returncode != 0 or not result.stdout.strip():
+        raise HTTPException(status_code=400, detail=(output[-2000:] or "播放列表解析失败"))
+
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as exc:
+        raise HTTPException(status_code=400, detail="播放列表解析结果无效") from exc
+
+    entries = []
+    raw_entries = payload.get("entries") or []
+    for index, entry in enumerate(raw_entries, start=1):
+        if not entry:
+            continue
+        entries.append(
+            {
+                "index": index,
+                "id": entry.get("id") or "",
+                "title": entry.get("title") or f"视频 {index}",
+                "duration": entry.get("duration"),
+                "uploader": entry.get("uploader") or entry.get("channel") or "",
+                "url": entry.get("url") or entry.get("webpage_url") or "",
+            }
+        )
+
+    if not entries:
+        raise HTTPException(status_code=400, detail="没有解析到可下载的视频条目")
+
+    truncated = False
+    if len(entries) > MAX_PLAYLIST_ITEMS:
+        entries = entries[:MAX_PLAYLIST_ITEMS]
+        truncated = True
+
+    return JSONResponse(
+        {
+            "ok": True,
+            "title": payload.get("title") or "播放列表",
+            "count": len(raw_entries),
+            "entries": entries,
+            "truncated": truncated,
+            "max_items": MAX_PLAYLIST_ITEMS,
+        }
+    )
+
+
 @app.post("/api/jobs")
 async def create_job(
     background_tasks: BackgroundTasks,
@@ -1200,8 +1352,11 @@ async def create_download(
     url: str = Form(...),
     quality: str = Form("best"),
     file_type: str = Form("mp4"),
+    playlist: bool = Form(False),
+    playlist_items: str = Form(""),
 ) -> JSONResponse:
-    clean_url = clean_video_url(url)
+    raw_url = url.strip()
+    clean_url = raw_url if playlist else clean_video_url(raw_url)
     if not clean_url.startswith(("http://", "https://")):
         raise HTTPException(status_code=400, detail="请输入 http 或 https 开头的视频链接")
     if len(clean_url) > 2000:
@@ -1210,6 +1365,12 @@ async def create_download(
         raise HTTPException(status_code=400, detail="Invalid yt-dlp quality")
     if file_type not in YTDLP_TYPES:
         raise HTTPException(status_code=400, detail="Invalid yt-dlp file type")
+    if is_youtube_playlist_url(raw_url) and not playlist:
+        raise HTTPException(status_code=400, detail="这是 YouTube 播放列表链接。若要下载列表，请勾选“下载播放列表”；若只要单个视频，请打开具体视频页再复制链接。")
+    selected_items = parse_playlist_items(playlist_items) if playlist else []
+    if playlist:
+        if not selected_items:
+            raise HTTPException(status_code=400, detail="请先解析播放列表并选择要下载的视频")
 
     job_id = uuid4().hex
     output_dir = OUTPUTS / job_id
@@ -1223,6 +1384,8 @@ async def create_download(
         "url": clean_url,
         "quality": quality,
         "file_type": file_type,
+        "playlist": playlist,
+        "playlist_items": selected_items,
         "output_dir": str(output_dir),
         "created_at": time.time(),
         "updated_at": time.time(),
@@ -1269,6 +1432,12 @@ def get_job(job_id: str) -> JSONResponse:
     public["controllable"] = get_job_process(job_id) is not None
     if data.get("status") == "done":
         public["download_url"] = f"/api/jobs/{job_id}/download"
+        raw_output_path = data.get("output_path")
+        output_path = Path(raw_output_path) if raw_output_path else None
+        if output_path and output_path.exists():
+            size = int(data.get("output_size_bytes") or output_path.stat().st_size)
+            public["output_size_bytes"] = size
+            public["output_size_label"] = file_size_label(size)
     return JSONResponse(public)
 
 

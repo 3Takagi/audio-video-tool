@@ -34,7 +34,7 @@
 ## 功能
 
 - 图片超分：基于 Real-ESRGAN，支持 1K、2K、4K 和自定义长边。
-- YouTube 视频下载：基于 yt-dlp，默认选择最高可用画质，也支持指定清晰度上限。
+- YouTube 视频下载：基于 yt-dlp，默认选择最高可用画质，支持指定清晰度上限和选择播放列表条目；多项结果以 ZIP 下载。
 - bilibili 视频下载：可使用本机登录状态下载账号可用规格。
 - 视频封面下载：提取 yt-dlp 支持链接的封面。
 - 任务控制：显示进度，支持暂停、继续、取消和下载结果。
@@ -90,6 +90,30 @@ C:\Users\Tom\AppData\Local\AudioVideoTool\backend
 桌面安装版和便携版共享这套后端环境。任意一种方式配置成功后，另一种方式会复用已有环境，不会每次重复下载。
 
 首次配置可能需要联网下载 Python 依赖、PyTorch 和 Real-ESRGAN 模型，耗时较长，也会占用数 GB 磁盘空间。配置完成后再次启动会跳过安装。
+
+桌面安装版首次启动时会询问后端环境保存位置，可以使用默认位置，也可以选择 D 盘、E 盘等空间更充足的位置。便携版也支持指定位置：
+
+```powershell
+start.bat -InstallRoot E:\AudioVideoTool
+```
+
+选择结果会保存到：
+
+```text
+%LocalAppData%\AudioVideoTool\install-location.json
+```
+
+之后桌面安装版和便携版都会自动复用这个位置。
+
+## 更新方式
+
+新版程序不需要手动删除旧运行时。下载新版 zip 后解压到任意目录，运行：
+
+```powershell
+powershell -ExecutionPolicy Bypass -File update.ps1
+```
+
+它只会同步新版程序文件，保留已有的 Python 环境、模型、配置、cookies、下载结果和日志。桌面安装版启动时也会自动同步打包内的新后端文件。
 
 ## 端口说明
 

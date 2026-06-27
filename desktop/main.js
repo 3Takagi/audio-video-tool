@@ -1,4 +1,4 @@
-const { app, BrowserWindow, dialog, shell } = require("electron");
+const { app, BrowserWindow, dialog, ipcMain, shell } = require("electron");
 const path = require("path");
 const fs = require("fs");
 const { spawn } = require("child_process");
@@ -8,6 +8,74 @@ const http = require("http");
 let mainWindow;
 let backendProcess;
 let installProcess;
+
+function streamLocalDownload(downloadUrl, destination) {
+  return new Promise((resolve, reject) => {
+    const source = new URL(downloadUrl, mainWindow.webContents.getURL());
+    if (source.protocol !== "http:" || !["127.0.0.1", "localhost", "::1"].includes(source.hostname)) {
+      reject(new Error("Only local backend downloads are allowed."));
+      return;
+    }
+
+    const partial = `${destination}.part`;
+    fs.rmSync(partial, { force: true });
+    const request = http.get(source, (response) => {
+      if (response.statusCode !== 200) {
+        response.resume();
+        reject(new Error(`Download failed with HTTP ${response.statusCode}.`));
+        return;
+      }
+      const output = fs.createWriteStream(partial);
+      response.pipe(output);
+      output.on("finish", () => {
+        output.close(() => {
+          try {
+            fs.rmSync(destination, { force: true });
+            fs.renameSync(partial, destination);
+            resolve();
+          } catch (error) {
+            fs.rmSync(partial, { force: true });
+            reject(error);
+          }
+        });
+      });
+      output.on("error", (error) => {
+        response.destroy();
+        fs.rmSync(partial, { force: true });
+        reject(error);
+      });
+    });
+    request.on("error", (error) => {
+      fs.rmSync(partial, { force: true });
+      reject(error);
+    });
+  });
+}
+
+ipcMain.handle("save-file", async (_event, payload) => {
+  const suggestedName = payload?.suggestedName || "result";
+  const downloadUrl = payload?.downloadUrl;
+  if (!downloadUrl) {
+    throw new Error("No download URL was provided.");
+  }
+  const result = await dialog.showSaveDialog(mainWindow, {
+    title: "保存结果",
+    defaultPath: suggestedName,
+  });
+  if (result.canceled || !result.filePath) {
+    return { canceled: true };
+  }
+  await streamLocalDownload(downloadUrl, result.filePath);
+  return { canceled: false, filePath: result.filePath };
+});
+
+ipcMain.handle("show-saved-file", async (_event, filePath) => {
+  if (!filePath || !fs.existsSync(filePath)) {
+    throw new Error("Saved file does not exist.");
+  }
+  shell.showItemInFolder(filePath);
+  return { ok: true };
+});
 
 function sendStatus(payload) {
   if (mainWindow && !mainWindow.isDestroyed()) {
@@ -134,6 +202,109 @@ function resolvePackageBackendRoot() {
   return path.resolve(__dirname, "..");
 }
 
+function defaultInstallRoot() {
+  return path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "AudioVideoTool");
+}
+
+function locationFilePath() {
+  return path.join(defaultInstallRoot(), "install-location.json");
+}
+
+function backendLooksReady(root) {
+  return fs.existsSync(path.join(root, "runtime", "venv", "Scripts", "python.exe")) &&
+    fs.existsSync(path.join(root, "runtime", "install.ok"));
+}
+
+function readInstallLocation() {
+  const file = locationFilePath();
+  if (!fs.existsSync(file)) return null;
+  try {
+    const data = JSON.parse(fs.readFileSync(file, "utf8"));
+    const backendRoot = data.backendRoot || (data.installRoot ? path.join(data.installRoot, "backend") : null);
+    return backendRoot ? path.resolve(backendRoot) : null;
+  } catch {
+    return null;
+  }
+}
+
+function writeInstallLocation(installRoot, backendRoot) {
+  const file = locationFilePath();
+  fs.mkdirSync(path.dirname(file), { recursive: true });
+  fs.writeFileSync(
+    file,
+    JSON.stringify(
+      {
+        schema: 1,
+        installRoot,
+        backendRoot,
+        updatedAt: new Date().toISOString(),
+      },
+      null,
+      2
+    ),
+    "utf8"
+  );
+}
+
+function normalizeChosenInstallRoot(selectedPath) {
+  const resolved = path.resolve(selectedPath);
+  return path.basename(resolved).toLowerCase() === "audiovideotool"
+    ? resolved
+    : path.join(resolved, "AudioVideoTool");
+}
+
+async function promptInstallRoot() {
+  const fallbackRoot = defaultInstallRoot();
+  const choice = await dialog.showMessageBox(mainWindow, {
+    type: "question",
+    buttons: ["使用默认位置", "选择其他位置", "取消"],
+    defaultId: 1,
+    cancelId: 2,
+    title: "选择后端安装位置",
+    message: "首次运行需要准备本地运行环境，可能占用数 GB 空间。",
+    detail: `默认位置：${path.join(fallbackRoot, "backend")}`,
+  });
+  if (choice.response === 2) {
+    app.quit();
+    throw new Error("Install location selection was canceled.");
+  }
+  if (choice.response === 0) {
+    return fallbackRoot;
+  }
+  const picked = await dialog.showOpenDialog(mainWindow, {
+    title: "选择 AudioVideoTool 安装位置",
+    properties: ["openDirectory", "createDirectory"],
+  });
+  if (picked.canceled || picked.filePaths.length === 0) {
+    app.quit();
+    throw new Error("Install location selection was canceled.");
+  }
+  return normalizeChosenInstallRoot(picked.filePaths[0]);
+}
+
+async function resolveSharedBackendRoot() {
+  if (process.env.AV_TOOL_BACKEND) {
+    return path.resolve(process.env.AV_TOOL_BACKEND);
+  }
+
+  const saved = readInstallLocation();
+  if (saved) {
+    return saved;
+  }
+
+  const fallbackRoot = defaultInstallRoot();
+  const fallbackBackend = path.join(fallbackRoot, "backend");
+  if (backendLooksReady(fallbackBackend)) {
+    writeInstallLocation(fallbackRoot, fallbackBackend);
+    return fallbackBackend;
+  }
+
+  const installRoot = await promptInstallRoot();
+  const backendRoot = path.join(installRoot, "backend");
+  writeInstallLocation(installRoot, backendRoot);
+  return backendRoot;
+}
+
 function copyRecursive(source, dest, ifMissing = false) {
   if (!fs.existsSync(source)) return;
   if (ifMissing && fs.existsSync(dest)) return;
@@ -142,16 +313,16 @@ function copyRecursive(source, dest, ifMissing = false) {
   fs.cpSync(source, dest, { recursive: true });
 }
 
-function syncBackendToShared(packageRoot) {
+function syncBackendToShared(packageRoot, sharedRoot) {
   if (process.env.AV_TOOL_BACKEND) {
     return packageRoot;
   }
-  const sharedRoot = path.join(process.env.LOCALAPPDATA || app.getPath("userData"), "AudioVideoTool", "backend");
   fs.mkdirSync(sharedRoot, { recursive: true });
 
   copyRecursive(path.join(packageRoot, "app"), path.join(sharedRoot, "app"));
   copyRecursive(path.join(packageRoot, "requirements.txt"), path.join(sharedRoot, "requirements.txt"));
   copyRecursive(path.join(packageRoot, "install.ps1"), path.join(sharedRoot, "install.ps1"));
+  copyRecursive(path.join(packageRoot, "update.ps1"), path.join(sharedRoot, "update.ps1"));
   copyRecursive(path.join(packageRoot, "slim.ps1"), path.join(sharedRoot, "slim.ps1"));
   copyRecursive(path.join(packageRoot, "config.example.json"), path.join(sharedRoot, "config.example.json"), true);
   copyRecursive(path.join(packageRoot, "runtime", "python"), path.join(sharedRoot, "runtime", "python"), true);
@@ -324,7 +495,8 @@ async function boot() {
   });
 
   const packageRoot = resolvePackageBackendRoot();
-  const root = syncBackendToShared(packageRoot);
+  const sharedRoot = await resolveSharedBackendRoot();
+  const root = syncBackendToShared(packageRoot, sharedRoot);
   sendStatus({ message: "准备后端资源", line: `Backend: ${root}` });
   try {
     const url = await startBackend(root);

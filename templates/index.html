@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>音视频工具</title>
-    <link rel="stylesheet" href="/static/style.css?v=20260626-glass-workbench-4" />
+    <link rel="stylesheet" href="/static/style.css?v=20260627-playlist-picker-2" />
   </head>
   <body data-theme="aurora">
     <main class="app-shell">
@@ -161,6 +161,25 @@
                     <option value="webm">WEBM</option>
                   </select>
                 </label>
+
+                <label class="check-row">
+                  <input id="youtube-playlist" name="playlist" type="checkbox" value="true" />
+                  <span>下载播放列表</span>
+                </label>
+
+                <button id="youtube-playlist-preview" class="secondary-action hidden" type="button">解析列表</button>
+              </div>
+
+              <input id="youtube-playlist-items" name="playlist_items" type="hidden" />
+              <div id="youtube-playlist-picker" class="playlist-picker hidden">
+                <div class="playlist-picker-head">
+                  <strong id="youtube-playlist-title">播放列表</strong>
+                  <div>
+                    <button id="youtube-playlist-select-all" class="mini-action" type="button">全选</button>
+                    <button id="youtube-playlist-clear" class="mini-action" type="button">取消全选</button>
+                  </div>
+                </div>
+                <div id="youtube-playlist-list" class="playlist-list"></div>
               </div>
 
               <button id="youtube-download-submit" type="submit">下载 YouTube 视频</button>
@@ -287,10 +306,11 @@
           </div>
           <a id="download" class="download hidden" href="#">下载结果</a>
           <button id="save-as" class="save-as hidden" type="button">保存到...</button>
+          <button id="open-folder" class="open-folder hidden" type="button">打开保存位置</button>
         </aside>
       </section>
     </main>
 
-    <script src="/static/app.js?v=20260626-glass-workbench-4"></script>
+    <script src="/static/app.js?v=20260627-playlist-picker-2"></script>
   </body>
 </html>

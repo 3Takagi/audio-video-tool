@@ -1,9 +1,17 @@
+param(
+  [string]$InstallRoot = ""
+)
+
 $ErrorActionPreference = "Stop"
 
 $PackageRoot = Split-Path -Parent $MyInvocation.MyCommand.Path
 $SyncScript = Join-Path $PackageRoot "sync-backend.ps1"
 if (Test-Path -LiteralPath $SyncScript) {
-  $syncOutput = powershell -NoProfile -ExecutionPolicy Bypass -File $SyncScript -PackageRoot $PackageRoot
+  $syncArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $SyncScript, "-PackageRoot", $PackageRoot)
+  if ($InstallRoot) {
+    $syncArgs += @("-SharedRoot", (Join-Path $InstallRoot "backend"))
+  }
+  $syncOutput = powershell @syncArgs
   if ($LASTEXITCODE -eq 0 -and $syncOutput) {
     $Root = [string]($syncOutput | Select-Object -Last 1)
   } else {

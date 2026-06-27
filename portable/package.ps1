@@ -35,6 +35,7 @@ Copy-Item -LiteralPath (Join-Path $Project "requirements.txt") -Destination (Joi
 
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.bat") -Destination (Join-Path $Stage "start.bat")
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.ps1") -Destination (Join-Path $Stage "start.ps1")
+Copy-Item -LiteralPath (Join-Path $Project "portable\update.ps1") -Destination (Join-Path $Stage "update.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\install.ps1") -Destination (Join-Path $Stage "install.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\slim.ps1") -Destination (Join-Path $Stage "slim.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\sync-backend.ps1") -Destination (Join-Path $Stage "sync-backend.ps1")
