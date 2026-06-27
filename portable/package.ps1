@@ -32,10 +32,12 @@ New-Item -ItemType File -Force -Path (Join-Path $Stage "app\__init__.py") | Out-
 Copy-Item -LiteralPath (Join-Path $Project "static") -Destination (Join-Path $Stage "app\static") -Recurse
 Copy-Item -LiteralPath (Join-Path $Project "templates") -Destination (Join-Path $Stage "app\templates") -Recurse
 Copy-Item -LiteralPath (Join-Path $Project "requirements.txt") -Destination (Join-Path $Stage "requirements.txt")
+Copy-Item -LiteralPath (Join-Path $Project "app-version.json") -Destination (Join-Path $Stage "app-version.json")
 
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.bat") -Destination (Join-Path $Stage "start.bat")
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.ps1") -Destination (Join-Path $Stage "start.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\update.ps1") -Destination (Join-Path $Stage "update.ps1")
+Copy-Item -LiteralPath (Join-Path $Project "portable\patch-update.ps1") -Destination (Join-Path $Stage "patch-update.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\install.ps1") -Destination (Join-Path $Stage "install.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\slim.ps1") -Destination (Join-Path $Stage "slim.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\sync-backend.ps1") -Destination (Join-Path $Stage "sync-backend.ps1")
@@ -109,6 +111,11 @@ if ($Slim) {
 
 Compress-Archive -Path (Join-Path $Stage "*") -DestinationPath $Zip -Force
 Write-Host "Generated: $Zip"
+
+powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $Project "portable\build-patch.ps1")
+if ($LASTEXITCODE -ne 0) {
+  throw "Patch package creation failed."
+}
 
 if ($MakeExe) {
   $SevenZip = "C:\Program Files\7-Zip\7z.exe"

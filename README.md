@@ -107,13 +107,17 @@ start.bat -InstallRoot E:\AudioVideoTool
 
 ## 更新方式
 
-新版程序不需要手动删除旧运行时。下载新版 zip 后解压到任意目录，运行：
+项目采用“稳定桌面壳 + 内容补丁”更新方式。普通的界面、下载逻辑和后端功能更新只发布约几十 KB 到几百 KB 的补丁，不再重复下载 Python、PyTorch、模型或 FFmpeg。桌面版启动时会自动检查并应用 GitHub Release 中的新补丁。
+
+只有 Electron 桌面壳、安装逻辑或系统集成发生变化时，才需要重新下载安装包。
+
+便携版也可以手动应用新版补丁。解压 `AudioVideoTool-Patch.zip` 后运行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File update.ps1
 ```
 
-它只会同步新版程序文件，保留已有的 Python 环境、模型、配置、cookies、下载结果和日志。桌面安装版启动时也会自动同步打包内的新后端文件。
+补丁带有单调递增的版本号和 SHA-256 校验。它只会同步程序文件，保留已有的 Python 环境、模型、配置、cookies、下载结果和日志；旧安装包也不会覆盖已应用的更高版本补丁。
 
 ## 端口说明
 

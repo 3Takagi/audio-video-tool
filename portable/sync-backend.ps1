@@ -1,6 +1,7 @@
 param(
   [string]$PackageRoot = (Split-Path -Parent $MyInvocation.MyCommand.Path),
-  [string]$SharedRoot = ""
+  [string]$SharedRoot = "",
+  [switch]$ForceContent
 )
 
 $ErrorActionPreference = "Stop"
@@ -80,11 +81,34 @@ function Copy-Path($RelativePath, [switch]$IfMissing) {
   Copy-Item -LiteralPath $source -Destination $dest -Recurse -Force
 }
 
-Copy-Path "app"
-Copy-Path "requirements.txt"
-Copy-Path "install.ps1"
-Copy-Path "update.ps1"
-Copy-Path "slim.ps1"
+function Get-ContentRevision($Root) {
+  $versionFile = Join-Path $Root "app-version.json"
+  if (!(Test-Path -LiteralPath $versionFile)) {
+    return 0
+  }
+  try {
+    $version = Get-Content -LiteralPath $versionFile -Encoding UTF8 -Raw | ConvertFrom-Json
+    return [int]$version.revision
+  } catch {
+    return 0
+  }
+}
+
+$packageRevision = Get-ContentRevision $PackageRoot
+$sharedRevision = Get-ContentRevision $SharedRoot
+$sharedApp = Join-Path $SharedRoot "app\app.py"
+$copyContent = $ForceContent -or !(Test-Path -LiteralPath $sharedApp) -or $packageRevision -gt $sharedRevision
+
+if ($copyContent) {
+  Copy-Path "app"
+  Copy-Path "requirements.txt"
+  Copy-Path "install.ps1"
+  Copy-Path "update.ps1"
+  Copy-Path "sync-backend.ps1"
+  Copy-Path "slim.ps1"
+  Copy-Path "patch-update.ps1"
+  Copy-Path "app-version.json"
+}
 Copy-Path "config.example.json" -IfMissing
 Copy-Path "runtime\python" -IfMissing
 Copy-Path "tools\Real-ESRGAN" -IfMissing

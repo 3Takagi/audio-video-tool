@@ -47,18 +47,20 @@ start.bat -InstallRoot E:\AudioVideoTool
 
 ### 更新方式
 
-新版 zip 解压到任意目录后，运行：
+桌面版会自动检查 GitHub Release 中的小型内容补丁。便携版可下载并解压 `AudioVideoTool-Patch.zip`，然后运行：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File update.ps1
 ```
 
-它只更新程序文件，不会删除已有 Python 环境、模型、配置、cookies、下载结果和日志。
+补丁包含版本号和 SHA-256 校验，只更新程序文件，不会删除已有 Python 环境、模型、配置、cookies、下载结果和日志。只有桌面壳或安装逻辑变化时才需要重新安装完整版本。
 
 ### 文件说明
 
 - `start.bat`：便携版启动入口。
 - `update.ps1`：从新版包同步程序文件，不删除运行时数据。
+- `patch-update.ps1`：桌面启动时检查、校验并应用内容补丁。
+- `app-version.json`：当前内容版本与补丁修订号。
 - `AudioVideoTool.html`：已启动服务的快捷入口页。
 - `install.ps1`：首次安装依赖脚本。
 - `config/`：配置和 cookies。
@@ -118,18 +120,20 @@ The selected backend location is saved to:
 
 ### Updates
 
-When a new zip is released, extract it anywhere and run:
+The desktop app automatically checks GitHub Releases for small content patches. Portable users can download and extract `AudioVideoTool-Patch.zip`, then run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File update.ps1
 ```
 
-This updates app files only. Your Python runtime, models, config, cookies, downloads, and logs are preserved.
+Patches include a revision and SHA-256 verification. They update application files only, preserving the Python runtime, models, config, cookies, downloads, and logs. A full reinstall is only needed for desktop-shell or installer changes.
 
 ### Files
 
 - `start.bat`: portable launcher.
 - `update.ps1`: syncs app files from a newer package without deleting runtime data.
+- `patch-update.ps1`: checks, verifies, and applies content patches at desktop startup.
+- `app-version.json`: installed content version and patch revision.
 - `AudioVideoTool.html`: shortcut page for an already running service.
 - `install.ps1`: first-run dependency installer.
 - `config/`: configuration and cookies.

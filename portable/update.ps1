@@ -10,7 +10,7 @@ if (!(Test-Path -LiteralPath $SyncScript)) {
   throw "sync-backend.ps1 was not found."
 }
 
-$syncArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $SyncScript, "-PackageRoot", $PackageRoot)
+$syncArgs = @("-NoProfile", "-ExecutionPolicy", "Bypass", "-File", $SyncScript, "-PackageRoot", $PackageRoot, "-ForceContent")
 if ($InstallRoot) {
   $syncArgs += @("-SharedRoot", (Join-Path $InstallRoot "backend"))
 }

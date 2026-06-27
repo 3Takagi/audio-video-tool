@@ -107,13 +107,17 @@ Both desktop and portable versions reuse that location afterward.
 
 ## Updating
 
-You do not need to delete an existing runtime. Extract the new zip anywhere and run:
+The project uses a stable desktop shell with independently versioned content patches. Normal UI, downloader, and backend changes ship as a patch of roughly tens to hundreds of KB, without repackaging Python, PyTorch, models, or FFmpeg. The desktop app checks GitHub Releases for a newer verified patch when it starts.
+
+Reinstalling the desktop package is only required when the Electron shell, installer, or system integration changes.
+
+Portable users can apply a patch manually. Extract `AudioVideoTool-Patch.zip`, then run:
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File update.ps1
 ```
 
-This syncs application files while preserving the Python runtime, models, configuration, cookies, downloads, and logs. The desktop installer also synchronizes its bundled backend files when it starts.
+Each patch has a monotonically increasing revision and SHA-256 verification. It updates application files while preserving the Python runtime, models, configuration, cookies, downloads, and logs. An older installer will not overwrite a newer installed content revision.
 
 ## Ports
 

@@ -8,6 +8,7 @@ const http = require("http");
 let mainWindow;
 let backendProcess;
 let installProcess;
+const SHELL_VERSION = "0.1.0";
 
 function streamLocalDownload(downloadUrl, destination) {
   return new Promise((resolve, reject) => {
@@ -313,17 +314,43 @@ function copyRecursive(source, dest, ifMissing = false) {
   fs.cpSync(source, dest, { recursive: true });
 }
 
+function contentRevision(root) {
+  const versionFile = path.join(root, "app-version.json");
+  if (!fs.existsSync(versionFile)) return 0;
+  try {
+    const version = JSON.parse(fs.readFileSync(versionFile, "utf8"));
+    return Number.isInteger(version.revision) ? version.revision : 0;
+  } catch {
+    return 0;
+  }
+}
+
 function syncBackendToShared(packageRoot, sharedRoot) {
   if (process.env.AV_TOOL_BACKEND) {
     return packageRoot;
   }
   fs.mkdirSync(sharedRoot, { recursive: true });
 
-  copyRecursive(path.join(packageRoot, "app"), path.join(sharedRoot, "app"));
-  copyRecursive(path.join(packageRoot, "requirements.txt"), path.join(sharedRoot, "requirements.txt"));
-  copyRecursive(path.join(packageRoot, "install.ps1"), path.join(sharedRoot, "install.ps1"));
-  copyRecursive(path.join(packageRoot, "update.ps1"), path.join(sharedRoot, "update.ps1"));
-  copyRecursive(path.join(packageRoot, "slim.ps1"), path.join(sharedRoot, "slim.ps1"));
+  const packageRevision = contentRevision(packageRoot);
+  const sharedRevision = contentRevision(sharedRoot);
+  const sharedAppExists = fs.existsSync(path.join(sharedRoot, "app", "app.py"));
+  if (!sharedAppExists || packageRevision > sharedRevision) {
+    for (const name of [
+      "app",
+      "requirements.txt",
+      "install.ps1",
+      "update.ps1",
+      "sync-backend.ps1",
+      "slim.ps1",
+      "patch-update.ps1",
+      "app-version.json",
+    ]) {
+      copyRecursive(path.join(packageRoot, name), path.join(sharedRoot, name));
+    }
+    sendStatus({ line: `Content revision ${packageRevision} was synchronized.` });
+  } else {
+    sendStatus({ line: `Keeping shared content revision ${sharedRevision}.` });
+  }
   copyRecursive(path.join(packageRoot, "config.example.json"), path.join(sharedRoot, "config.example.json"), true);
   copyRecursive(path.join(packageRoot, "runtime", "python"), path.join(sharedRoot, "runtime", "python"), true);
   copyRecursive(path.join(packageRoot, "tools", "Real-ESRGAN"), path.join(sharedRoot, "tools", "Real-ESRGAN"), true);
@@ -333,6 +360,22 @@ function syncBackendToShared(packageRoot, sharedRoot) {
     fs.mkdirSync(path.join(sharedRoot, name), { recursive: true });
   }
   return sharedRoot;
+}
+
+async function applyContentPatch(root) {
+  if (process.env.AV_TOOL_SKIP_PATCH_UPDATE === "1") return;
+  const updater = path.join(root, "patch-update.ps1");
+  if (!fs.existsSync(updater)) return;
+  try {
+    await runProcess(
+      "powershell.exe",
+      ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", updater, "-Root", root],
+      { cwd: root, env: { ...process.env, AV_TOOL_SHELL_VERSION: SHELL_VERSION } },
+      "Checking for content updates"
+    );
+  } catch (error) {
+    sendStatus({ line: `Patch check failed; continuing with installed content: ${error.message}` });
+  }
 }
 
 function ensureConfig(root) {
@@ -499,6 +542,7 @@ async function boot() {
   const root = syncBackendToShared(packageRoot, sharedRoot);
   sendStatus({ message: "准备后端资源", line: `Backend: ${root}` });
   try {
+    await applyContentPatch(root);
     const url = await startBackend(root);
     await mainWindow.loadURL(url);
   } catch (error) {
