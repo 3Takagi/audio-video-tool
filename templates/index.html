@@ -93,6 +93,20 @@
                   <input name="custom_long_edge" type="number" min="512" max="8192" step="16" placeholder="例如 3000" />
                 </label>
 
+                <section id="hardware-panel" class="hardware-panel" aria-live="polite">
+                  <div class="hardware-panel__title">
+                    <span class="hardware-panel__dot"></span>
+                    <strong>本机硬件</strong>
+                    <span id="hardware-scan-status">正在扫描</span>
+                  </div>
+                  <div class="hardware-panel__items">
+                    <span><small>处理设备</small><b id="hardware-device">检测中...</b></span>
+                    <span><small>显存 / 内存</small><b id="hardware-memory">检测中...</b></span>
+                    <span><small>计算精度</small><b id="hardware-precision">检测中...</b></span>
+                    <span><small>智能 Tile</small><b id="hardware-tile">检测中...</b></span>
+                  </div>
+                </section>
+
                 <label>
                   <span>性能模式</span>
                   <select id="performance-mode" name="tile_preset">

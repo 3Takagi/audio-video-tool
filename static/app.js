@@ -28,6 +28,12 @@ const target = document.querySelector("#target");
 const customTargetWrap = document.querySelector("#custom-target-wrap");
 const performanceMode = document.querySelector("#performance-mode");
 const performanceHint = document.querySelector("#performance-hint");
+const hardwarePanel = document.querySelector("#hardware-panel");
+const hardwareScanStatus = document.querySelector("#hardware-scan-status");
+const hardwareDevice = document.querySelector("#hardware-device");
+const hardwareMemory = document.querySelector("#hardware-memory");
+const hardwarePrecision = document.querySelector("#hardware-precision");
+const hardwareTile = document.querySelector("#hardware-tile");
 const youtubePlaylist = document.querySelector("#youtube-playlist");
 const youtubeUrlInput = youtubeDownloadForm?.querySelector("input[name='url']");
 const youtubePlaylistPreview = document.querySelector("#youtube-playlist-preview");
@@ -67,10 +73,28 @@ fetch("/api/system/capabilities")
   .then((response) => response.ok ? response.json() : null)
   .then((data) => {
     const upscale = data?.upscale;
-    if (!upscale || !performanceHint || performanceMode?.value !== "adaptive") return;
-    performanceHint.textContent = `检测到 ${upscale.label}，智能模式建议 Tile ${upscale.recommended_tile}。`;
+    if (!upscale) return;
+    hardwarePanel?.classList.add("is-ready");
+    if (hardwareScanStatus) hardwareScanStatus.textContent = "扫描完成";
+    if (hardwareDevice) hardwareDevice.textContent = upscale.device_name || (upscale.device === "cuda" ? "NVIDIA GPU" : "CPU");
+    if (hardwareMemory) {
+      hardwareMemory.textContent = upscale.device === "cuda"
+        ? `${(Number(upscale.vram_mb || 0) / 1024).toFixed(1)} GB 显存 · ${upscale.ram_gb} GB 内存`
+        : `${upscale.ram_gb} GB 内存`;
+    }
+    if (hardwarePrecision) hardwarePrecision.textContent = upscale.fp32 ? "FP32" : "FP16";
+    if (hardwareTile) hardwareTile.textContent = String(upscale.recommended_tile);
+    if (performanceHint && performanceMode?.value === "adaptive") {
+      performanceHint.textContent = `已按本机资源选择 Tile ${upscale.recommended_tile}；处理时若资源不足还会继续自动降低。`;
+    }
   })
   .catch(() => {
+    hardwarePanel?.classList.add("is-error");
+    if (hardwareScanStatus) hardwareScanStatus.textContent = "扫描不可用";
+    if (hardwareDevice) hardwareDevice.textContent = "保守兼容模式";
+    if (hardwareMemory) hardwareMemory.textContent = "未识别";
+    if (hardwarePrecision) hardwarePrecision.textContent = "FP32";
+    if (hardwareTile) hardwareTile.textContent = "64";
     if (performanceHint && performanceMode?.value === "adaptive") {
       performanceHint.textContent = "硬件检测不可用时，将采用保守的 Tile 设置。";
     }
