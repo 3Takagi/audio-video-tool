@@ -197,13 +197,13 @@ def normalize_tile_preset(value: str) -> str:
 
 def recommended_tile(hardware: dict, model_name: str) -> int:
     if hardware.get("device") != "cuda":
-        return 128
+        return 64 if float(hardware.get("ram_gb") or 0) <= 8 else 128
     vram_mb = int(hardware.get("vram_mb") or 0)
-    if vram_mb <= 2048:
+    if vram_mb <= 4096:
         tile = 64
-    elif vram_mb <= 4096:
+    elif vram_mb <= 6144:
         tile = 128
-    elif vram_mb <= 8192:
+    elif vram_mb <= 10240:
         tile = 256
     else:
         tile = 512
