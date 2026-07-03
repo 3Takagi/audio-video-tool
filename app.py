@@ -125,6 +125,28 @@ PROCESS_LOCK = threading.Lock()
 JOB_PROCESSES: dict[str, subprocess.Popen] = {}
 HARDWARE_LOCK = threading.Lock()
 HARDWARE_CACHE: dict | None = None
+UPDATE_LOCK = threading.Lock()
+
+
+def read_app_version() -> dict:
+    for version_file in (ROOT / "app-version.json", APP_DIR / "app-version.json"):
+        if version_file.exists():
+            try:
+                return json.loads(version_file.read_text(encoding="utf-8-sig"))
+            except (OSError, json.JSONDecodeError):
+                continue
+    return {"version": "unknown", "revision": 0}
+
+
+def latest_update_log_line() -> str:
+    log_file = ROOT / "logs" / "update.log"
+    if not log_file.exists():
+        return ""
+    try:
+        lines = [line.strip() for line in log_file.read_text(encoding="utf-8-sig", errors="replace").splitlines() if line.strip()]
+        return lines[-1] if lines else ""
+    except OSError:
+        return ""
 
 
 def detect_upscale_hardware(force: bool = False) -> dict:
@@ -1666,3 +1688,66 @@ def system_capabilities(refresh: bool = False) -> JSONResponse:
             }
         }
     )
+
+
+@app.get("/api/system/update/status")
+def update_status() -> JSONResponse:
+    version = read_app_version()
+    return JSONResponse(
+        {
+            "version": version.get("version", "unknown"),
+            "revision": int(version.get("revision") or 0),
+            "last_result": latest_update_log_line(),
+        }
+    )
+
+
+@app.post("/api/system/update/check")
+def check_for_updates() -> JSONResponse:
+    updater = ROOT / "patch-update.ps1"
+    if os.name != "nt" or not updater.exists():
+        raise HTTPException(status_code=503, detail="当前运行方式不支持自动更新。")
+
+    if not UPDATE_LOCK.acquire(blocking=False):
+        raise HTTPException(status_code=409, detail="更新检查正在进行中。")
+    try:
+        before = read_app_version()
+        env = {**os.environ, "AV_TOOL_SHELL_VERSION": os.environ.get("AV_TOOL_SHELL_VERSION", "0.1.0")}
+        result = subprocess.run(
+            [
+                "powershell.exe",
+                "-NoProfile",
+                "-ExecutionPolicy",
+                "Bypass",
+                "-File",
+                str(updater),
+                "-Root",
+                str(ROOT),
+            ],
+            cwd=str(ROOT),
+            env=env,
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+            timeout=180,
+            creationflags=subprocess.CREATE_NO_WINDOW,
+        )
+        after = read_app_version()
+        updated = int(after.get("revision") or 0) > int(before.get("revision") or 0)
+        output_lines = [line.strip() for line in f"{result.stdout}\n{result.stderr}".splitlines() if line.strip()]
+        message = output_lines[-1] if output_lines else latest_update_log_line()
+        return JSONResponse(
+            {
+                "ok": result.returncode == 0,
+                "updated": updated,
+                "restart_required": updated,
+                "version": after.get("version", before.get("version", "unknown")),
+                "revision": int(after.get("revision") or 0),
+                "message": message,
+            }
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise HTTPException(status_code=504, detail="检查更新超时，请确认能够访问 GitHub。") from exc
+    finally:
+        UPDATE_LOCK.release()

@@ -4,7 +4,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>音视频工具</title>
-    <link rel="stylesheet" href="/static/style.css?v=20260703-hardware-scan-1" />
+    <link rel="stylesheet" href="/static/style.css?v=20260703-update-banner-1" />
   </head>
   <body data-theme="aurora">
     <main class="app-shell">
@@ -30,6 +30,15 @@
           <button class="theme-dot sunset" type="button" data-theme="sunset" title="暖橘"></button>
         </div>
       </header>
+
+      <section id="update-banner" class="update-banner glass-panel" aria-live="polite">
+        <span class="update-banner__indicator" aria-hidden="true"></span>
+        <div class="update-banner__copy">
+          <strong id="current-version">正在读取版本</strong>
+          <span id="update-message">桌面版会在每次启动时自动检查更新。</span>
+        </div>
+        <button id="check-update" class="check-update" type="button">检查更新</button>
+      </section>
 
       <section class="hero-strip">
         <div class="hero-copy">
@@ -327,6 +336,6 @@
       </section>
     </main>
 
-    <script src="/static/app.js?v=20260703-hardware-scan-1"></script>
+    <script src="/static/app.js?v=20260703-update-banner-1"></script>
   </body>
 </html>

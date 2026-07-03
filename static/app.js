@@ -35,6 +35,10 @@ const hardwareMemory = document.querySelector("#hardware-memory");
 const hardwarePrecision = document.querySelector("#hardware-precision");
 const hardwareTile = document.querySelector("#hardware-tile");
 const hardwareRescan = document.querySelector("#hardware-rescan");
+const updateBanner = document.querySelector("#update-banner");
+const currentVersion = document.querySelector("#current-version");
+const updateMessage = document.querySelector("#update-message");
+const checkUpdate = document.querySelector("#check-update");
 const youtubePlaylist = document.querySelector("#youtube-playlist");
 const youtubeUrlInput = youtubeDownloadForm?.querySelector("input[name='url']");
 const youtubePlaylistPreview = document.querySelector("#youtube-playlist-preview");
@@ -54,6 +58,50 @@ let currentDownloadUrl = null;
 let currentDownloadName = "result.png";
 let savedFilePath = null;
 let playlistPreviewEntries = [];
+
+async function loadUpdateStatus() {
+  try {
+    const response = await fetch("/api/system/update/status", { cache: "no-store" });
+    if (!response.ok) throw new Error("Version status failed");
+    const data = await response.json();
+    if (currentVersion) currentVersion.textContent = `当前版本 v${data.version} · revision ${data.revision}`;
+    if (updateMessage) updateMessage.textContent = "启动时已完成自动更新检查。";
+    updateBanner?.classList.add("is-current");
+  } catch {
+    if (currentVersion) currentVersion.textContent = "版本信息不可用";
+    if (updateMessage) updateMessage.textContent = "仍可继续使用当前功能。";
+  }
+}
+
+async function runUpdateCheck() {
+  if (!checkUpdate) return;
+  checkUpdate.disabled = true;
+  checkUpdate.textContent = "检查中...";
+  updateBanner?.classList.remove("is-current", "is-updated", "is-error");
+  if (updateMessage) updateMessage.textContent = "正在连接 GitHub 并核对补丁版本。";
+  try {
+    const response = await fetch("/api/system/update/check", { method: "POST", cache: "no-store" });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.detail || "检查更新失败");
+    if (currentVersion) currentVersion.textContent = `当前版本 v${data.version} · revision ${data.revision}`;
+    if (data.updated) {
+      updateBanner?.classList.add("is-updated");
+      if (updateMessage) updateMessage.textContent = "更新已安装，请关闭并重新打开桌面版以生效。";
+    } else {
+      updateBanner?.classList.add("is-current");
+      if (updateMessage) updateMessage.textContent = "已是最新版。";
+    }
+  } catch (error) {
+    updateBanner?.classList.add("is-error");
+    if (updateMessage) updateMessage.textContent = error.message || "检查更新失败，请稍后重试。";
+  } finally {
+    checkUpdate.disabled = false;
+    checkUpdate.textContent = "检查更新";
+  }
+}
+
+checkUpdate?.addEventListener("click", runUpdateCheck);
+loadUpdateStatus();
 
 const performanceHelp = {
   adaptive: "根据显卡、显存和模型自动选择 Tile。",
