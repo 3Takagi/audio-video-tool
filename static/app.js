@@ -34,6 +34,7 @@ const hardwareDevice = document.querySelector("#hardware-device");
 const hardwareMemory = document.querySelector("#hardware-memory");
 const hardwarePrecision = document.querySelector("#hardware-precision");
 const hardwareTile = document.querySelector("#hardware-tile");
+const hardwareRescan = document.querySelector("#hardware-rescan");
 const youtubePlaylist = document.querySelector("#youtube-playlist");
 const youtubeUrlInput = youtubeDownloadForm?.querySelector("input[name='url']");
 const youtubePlaylistPreview = document.querySelector("#youtube-playlist-preview");
@@ -69,11 +70,21 @@ function updatePerformanceHint() {
 performanceMode?.addEventListener("change", updatePerformanceHint);
 updatePerformanceHint();
 
-fetch("/api/system/capabilities")
-  .then((response) => response.ok ? response.json() : null)
-  .then((data) => {
+async function scanHardware(force = false) {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), 15000);
+  hardwarePanel?.classList.remove("is-ready", "is-error");
+  if (hardwareScanStatus) hardwareScanStatus.textContent = "正在扫描";
+  if (hardwareRescan) hardwareRescan.disabled = true;
+  try {
+    const response = await fetch(`/api/system/capabilities${force ? "?refresh=true" : ""}`, {
+      cache: "no-store",
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error("Hardware scan failed");
+    const data = await response.json();
     const upscale = data?.upscale;
-    if (!upscale) return;
+    if (!upscale) throw new Error("Hardware data missing");
     hardwarePanel?.classList.add("is-ready");
     if (hardwareScanStatus) hardwareScanStatus.textContent = "扫描完成";
     if (hardwareDevice) hardwareDevice.textContent = upscale.device_name || (upscale.device === "cuda" ? "NVIDIA GPU" : "CPU");
@@ -87,10 +98,9 @@ fetch("/api/system/capabilities")
     if (performanceHint && performanceMode?.value === "adaptive") {
       performanceHint.textContent = `已按本机资源选择 Tile ${upscale.recommended_tile}；处理时若资源不足还会继续自动降低。`;
     }
-  })
-  .catch(() => {
+  } catch (error) {
     hardwarePanel?.classList.add("is-error");
-    if (hardwareScanStatus) hardwareScanStatus.textContent = "扫描不可用";
+    if (hardwareScanStatus) hardwareScanStatus.textContent = error?.name === "AbortError" ? "扫描超时" : "扫描不可用";
     if (hardwareDevice) hardwareDevice.textContent = "保守兼容模式";
     if (hardwareMemory) hardwareMemory.textContent = "未识别";
     if (hardwarePrecision) hardwarePrecision.textContent = "FP32";
@@ -98,7 +108,14 @@ fetch("/api/system/capabilities")
     if (performanceHint && performanceMode?.value === "adaptive") {
       performanceHint.textContent = "硬件检测不可用时，将采用保守的 Tile 设置。";
     }
-  });
+  } finally {
+    window.clearTimeout(timeout);
+    if (hardwareRescan) hardwareRescan.disabled = false;
+  }
+}
+
+hardwareRescan?.addEventListener("click", () => scanHardware(true));
+scanHardware(false);
 
 function activatePane(id) {
   tabButtons.forEach((button) => {

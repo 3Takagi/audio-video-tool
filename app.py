@@ -1655,8 +1655,8 @@ def health() -> dict:
 
 
 @app.get("/api/system/capabilities")
-def system_capabilities() -> JSONResponse:
-    hardware = detect_upscale_hardware()
+def system_capabilities(refresh: bool = False) -> JSONResponse:
+    hardware = detect_upscale_hardware(force=refresh)
     return JSONResponse(
         {
             "upscale": {
