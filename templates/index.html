@@ -95,12 +95,13 @@
 
                 <label>
                   <span>性能模式</span>
-                  <select name="tile_preset">
-                    <option value="stable">稳定</option>
-                    <option value="fast">快速</option>
-                    <option value="safe">省显存</option>
-                    <option value="auto">自动</option>
+                  <select id="performance-mode" name="tile_preset">
+                    <option value="adaptive" selected>智能适配（推荐）</option>
+                    <option value="low">低配 / 省显存</option>
+                    <option value="balanced">均衡</option>
+                    <option value="fast">快速 / 高显存</option>
                   </select>
+                  <small id="performance-hint" class="field-help">正在检测本机硬件并选择 Tile。</small>
                 </label>
 
                 <label>

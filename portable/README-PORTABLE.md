@@ -16,7 +16,8 @@ start.bat
 
 ### 功能
 
-- 图片超分：Real-ESRGAN，支持 1K、2K、4K 和自定义长边。
+- 图片超分：Real-ESRGAN，支持 1K、2K、4K 和自定义长边，并自动检测 GPU、显存与 CPU。
+- 低配适配：智能选择 Tile；内存或显存不足时自动降低 Tile 后重试。
 - YouTube 视频下载：默认最高可用质量，也支持指定清晰度上限。
 - bilibili 视频下载：可使用本机登录状态。
 - 视频封面下载：提取常见视频链接封面。
@@ -89,7 +90,8 @@ Your browser will open the local web UI. If port `7860` is busy, the tool automa
 
 ### Features
 
-- Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets.
+- Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets plus automatic GPU, VRAM, and CPU detection.
+- Low-spec adaptation: automatic Tile selection and lower-Tile retries after memory failures.
 - YouTube download: highest available quality by default, with optional quality ceilings.
 - bilibili download: can use local login state.
 - Thumbnail download: extracts thumbnails from common video links.
