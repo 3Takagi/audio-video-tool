@@ -33,7 +33,8 @@ You do not need to download both. The desktop installer does not require the por
 
 ## Features
 
-- Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets.
+- Image upscaling: Real-ESRGAN with 1K, 2K, 4K, and custom long-edge targets, plus local GPU, VRAM, and CPU detection for automatic Tile and precision selection.
+- Low-spec adaptation: adaptive, low-memory, balanced, and fast profiles with automatic lower-Tile retries after memory failures.
 - YouTube download: yt-dlp based, highest available quality by default, with optional quality ceilings and playlist item selection; multiple results are delivered as a ZIP.
 - bilibili download: can use local browser login state for account-available streams.
 - Thumbnail download: extracts thumbnails from yt-dlp supported links.

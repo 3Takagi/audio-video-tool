@@ -90,10 +90,21 @@ TARGET_LONG_EDGES = {
     "4k": 3840,
 }
 TILE_PRESETS = {
-    "stable": 256,
+    "adaptive": None,
+    "low": 128,
+    "balanced": 256,
     "fast": 512,
-    "safe": 128,
-    "auto": 0,
+}
+TILE_PRESET_ALIASES = {
+    "auto": "adaptive",
+    "safe": "low",
+    "stable": "balanced",
+}
+TILE_PRESET_LABELS = {
+    "adaptive": "智能适配",
+    "low": "低配 / 省显存",
+    "balanced": "均衡",
+    "fast": "快速 / 高显存",
 }
 YTDLP_QUALITIES = {
     "best": None,
@@ -112,6 +123,114 @@ templates = Jinja2Templates(directory=APP_DIR / "templates")
 
 PROCESS_LOCK = threading.Lock()
 JOB_PROCESSES: dict[str, subprocess.Popen] = {}
+HARDWARE_LOCK = threading.Lock()
+HARDWARE_CACHE: dict | None = None
+
+
+def detect_upscale_hardware(force: bool = False) -> dict:
+    global HARDWARE_CACHE
+    with HARDWARE_LOCK:
+        if HARDWARE_CACHE is not None and not force:
+            return dict(HARDWARE_CACHE)
+
+        result = {
+            "device": "cpu",
+            "device_name": "CPU",
+            "vram_mb": 0,
+            "ram_gb": round(psutil.virtual_memory().total / (1024 ** 3), 1),
+            "fp32": True,
+        }
+        probe = """
+import json
+import torch
+
+payload = {"cuda": bool(torch.cuda.is_available())}
+if payload["cuda"]:
+    props = torch.cuda.get_device_properties(0)
+    payload.update({
+        "name": torch.cuda.get_device_name(0),
+        "vram_mb": int(props.total_memory / (1024 * 1024)),
+    })
+print(json.dumps(payload, ensure_ascii=False))
+"""
+        try:
+            completed = subprocess.run(
+                [str(PYTHON), "-c", probe],
+                capture_output=True,
+                text=True,
+                encoding="utf-8",
+                errors="replace",
+                timeout=45,
+                creationflags=subprocess.CREATE_NO_WINDOW if os.name == "nt" else 0,
+            )
+            lines = [line.strip() for line in completed.stdout.splitlines() if line.strip()]
+            if completed.returncode == 0 and lines:
+                payload = json.loads(lines[-1])
+                if payload.get("cuda"):
+                    result.update(
+                        device="cuda",
+                        device_name=str(payload.get("name") or "NVIDIA GPU"),
+                        vram_mb=int(payload.get("vram_mb") or 0),
+                        fp32=False,
+                    )
+            elif completed.stderr:
+                result["probe_warning"] = completed.stderr[-500:]
+        except Exception as exc:  # noqa: BLE001 - hardware probing must never block the app.
+            result["probe_warning"] = str(exc)
+
+        if result["device"] == "cuda":
+            vram_gb = result["vram_mb"] / 1024
+            result["label"] = f'{result["device_name"]} / {vram_gb:.1f} GB 显存'
+        else:
+            result["label"] = f'CPU / {result["ram_gb"]:.1f} GB 内存'
+
+        HARDWARE_CACHE = result
+        return dict(result)
+
+
+def normalize_tile_preset(value: str) -> str:
+    normalized = TILE_PRESET_ALIASES.get(value, value)
+    if normalized not in TILE_PRESETS:
+        raise ValueError("Invalid tile preset")
+    return normalized
+
+
+def recommended_tile(hardware: dict, model_name: str) -> int:
+    if hardware.get("device") != "cuda":
+        return 128
+    vram_mb = int(hardware.get("vram_mb") or 0)
+    if vram_mb <= 2048:
+        tile = 64
+    elif vram_mb <= 4096:
+        tile = 128
+    elif vram_mb <= 8192:
+        tile = 256
+    else:
+        tile = 512
+    if model_name == "RealESRGAN_x4plus":
+        tile = min(tile, 256)
+    return tile
+
+
+def tile_attempts(initial_tile: int) -> list[int]:
+    levels = [512, 384, 256, 128, 64]
+    return [initial_tile] + [value for value in levels if value < initial_tile]
+
+
+def is_memory_failure(result: subprocess.CompletedProcess) -> bool:
+    output = f"{result.stdout}\n{result.stderr}".lower()
+    markers = (
+        "out of memory",
+        "cuda error",
+        "cublas_status_alloc_failed",
+        "defaultcpuallocator",
+        "not enough memory",
+        "cannot allocate memory",
+        "allocation failed",
+        "output_tile' referenced before assignment",
+        'output_tile" referenced before assignment',
+    )
+    return any(marker in output for marker in markers)
 
 
 def job_path(job_id: str) -> Path:
@@ -726,36 +845,54 @@ def run_upscale(job_id: str) -> None:
     if runtime_input_path.resolve() != input_path.resolve():
         shutil.copy2(input_path, runtime_input_path)
 
-    update_job(job_id, status="running", message="Real-ESRGAN is processing the image", progress=8, progress_label="开始处理")
-
-    cmd = [
-        str(PYTHON),
-        str(REAL_ESRGAN),
-        "-i",
-        str(runtime_input_path),
-        "-o",
-        str(output_dir),
-        "-n",
-        data["model_name"],
-        "-s",
-        str(data["scale"]),
-        "-t",
-        str(data["tile"]),
-        "--suffix",
-        data["suffix"],
-        "--ext",
-        data["ext"],
-        "-g",
-        "0",
-    ]
+    hardware = detect_upscale_hardware()
+    requested_tile = data.get("tile")
+    initial_tile = int(requested_tile) if requested_tile else recommended_tile(hardware, data["model_name"])
+    attempts = tile_attempts(initial_tile)
+    device_message = hardware["label"]
+    if hardware["device"] == "cpu":
+        device_message += "，CPU 模式可能较慢"
+    update_job(
+        job_id,
+        status="running",
+        message="Real-ESRGAN is processing the image",
+        progress=8,
+        progress_label="开始处理",
+        hardware=hardware["label"],
+        device=hardware["device"],
+        effective_tile=initial_tile,
+        precision="FP32" if hardware["fp32"] else "FP16",
+        device_message=device_message,
+    )
 
     try:
         result = None
         out_file = None
-        for attempt in range(2):
+        for attempt, effective_tile in enumerate(attempts):
             if job_is_canceled(job_id):
                 return
-            set_progress(job_id, 12 if attempt == 0 else 18, "超分处理中")
+            cmd = [
+                str(PYTHON),
+                str(REAL_ESRGAN),
+                "-i",
+                str(runtime_input_path),
+                "-o",
+                str(output_dir),
+                "-n",
+                data["model_name"],
+                "-s",
+                str(data["scale"]),
+                "-t",
+                str(effective_tile),
+                "--suffix",
+                data["suffix"],
+                "--ext",
+                data["ext"],
+            ]
+            if hardware["fp32"]:
+                cmd.append("--fp32")
+            update_job(job_id, effective_tile=effective_tile)
+            set_progress(job_id, min(12 + attempt * 6, 36), f"超分处理中 · Tile {effective_tile}")
             result = run_tracked_process(
                 job_id,
                 cmd,
@@ -767,12 +904,25 @@ def run_upscale(job_id: str) -> None:
             out_file = find_output_file(output_dir, runtime_input_path, data["suffix"], data["ext"])
             if result.returncode == 0 or out_file is not None:
                 break
-            update_job(job_id, message="Real-ESRGAN failed once, retrying", returncode=result.returncode)
-            time.sleep(1)
+            if is_memory_failure(result) and attempt + 1 < len(attempts):
+                next_tile = attempts[attempt + 1]
+                update_job(
+                    job_id,
+                    message=f"内存或显存不足，自动降低到 Tile {next_tile} 后重试",
+                    returncode=result.returncode,
+                )
+                time.sleep(0.5)
+                continue
+            break
 
         if result.returncode != 0:
             if out_file is None:
-                update_job(job_id, status="failed", message="Output file was not created")
+                failure_message = (
+                    "设备内存或显存不足，已尝试降低 Tile 但仍未生成结果"
+                    if is_memory_failure(result)
+                    else "Output file was not created"
+                )
+                update_job(job_id, status="failed", message=failure_message)
                 update_job(
                     job_id,
                     returncode=result.returncode,
@@ -1279,20 +1429,23 @@ async def create_job(
     custom_long_edge: Optional[int] = Form(None),
     scale: Optional[float] = Form(None),
     tile: Optional[int] = Form(None),
-    tile_preset: str = Form("stable"),
+    tile_preset: str = Form("adaptive"),
     ext: str = Form("png"),
 ) -> JSONResponse:
     if model not in MODELS:
         raise HTTPException(status_code=400, detail="Invalid model")
     if tile is None:
-        if tile_preset not in TILE_PRESETS:
+        try:
+            normalized_preset = normalize_tile_preset(tile_preset)
+        except ValueError:
             raise HTTPException(status_code=400, detail="Invalid tile preset")
-        tile_value = TILE_PRESETS[tile_preset]
+        tile_value = TILE_PRESETS[normalized_preset]
     else:
         # Numeric tile is kept for compatibility with older API calls. The UI uses tile_preset now.
-        if tile not in {0, 128, 256, 384, 512}:
+        if tile not in {0, 64, 128, 256, 384, 512}:
             raise HTTPException(status_code=400, detail="Invalid tile size")
-        tile_value = tile
+        tile_value = tile or None
+        normalized_preset = "adaptive" if tile == 0 else f"{tile}px"
     if ext not in {"png", "jpg"}:
         raise HTTPException(status_code=400, detail="Invalid output format")
 
@@ -1335,7 +1488,8 @@ async def create_job(
         "target": target_label,
         "scale": computed_scale,
         "tile": tile_value,
-        "tile_preset": tile_preset if tile is None else f"{tile}px",
+        "tile_preset": normalized_preset,
+        "tile_preset_label": TILE_PRESET_LABELS.get(normalized_preset, normalized_preset),
         "ext": ext,
         "suffix": filename_suffix,
         "created_at": time.time(),
@@ -1498,3 +1652,17 @@ def health() -> dict:
         "python": str(PYTHON),
         "realesrgan": str(REAL_ESRGAN),
     }
+
+
+@app.get("/api/system/capabilities")
+def system_capabilities() -> JSONResponse:
+    hardware = detect_upscale_hardware()
+    return JSONResponse(
+        {
+            "upscale": {
+                **hardware,
+                "recommended_tile": recommended_tile(hardware, MODELS["anime"]),
+                "recommended_profile": "adaptive",
+            }
+        }
+    )

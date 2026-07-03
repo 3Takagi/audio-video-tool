@@ -26,6 +26,8 @@ const progressPercent = document.querySelector("#progress-percent");
 const progressBar = document.querySelector("#progress-bar");
 const target = document.querySelector("#target");
 const customTargetWrap = document.querySelector("#custom-target-wrap");
+const performanceMode = document.querySelector("#performance-mode");
+const performanceHint = document.querySelector("#performance-hint");
 const youtubePlaylist = document.querySelector("#youtube-playlist");
 const youtubeUrlInput = youtubeDownloadForm?.querySelector("input[name='url']");
 const youtubePlaylistPreview = document.querySelector("#youtube-playlist-preview");
@@ -45,6 +47,34 @@ let currentDownloadUrl = null;
 let currentDownloadName = "result.png";
 let savedFilePath = null;
 let playlistPreviewEntries = [];
+
+const performanceHelp = {
+  adaptive: "根据显卡、显存和模型自动选择 Tile。",
+  low: "Tile 128，降低内存和显存占用，但处理时间更长。",
+  balanced: "Tile 256，适合多数独立显卡。",
+  fast: "Tile 512，速度更快，建议 8 GB 以上显存。",
+};
+
+function updatePerformanceHint() {
+  if (!performanceHint || !performanceMode) return;
+  performanceHint.textContent = performanceHelp[performanceMode.value] || "";
+}
+
+performanceMode?.addEventListener("change", updatePerformanceHint);
+updatePerformanceHint();
+
+fetch("/api/system/capabilities")
+  .then((response) => response.ok ? response.json() : null)
+  .then((data) => {
+    const upscale = data?.upscale;
+    if (!upscale || !performanceHint || performanceMode?.value !== "adaptive") return;
+    performanceHint.textContent = `检测到 ${upscale.label}，智能模式建议 Tile ${upscale.recommended_tile}。`;
+  })
+  .catch(() => {
+    if (performanceHint && performanceMode?.value === "adaptive") {
+      performanceHint.textContent = "硬件检测不可用时，将采用保守的 Tile 设置。";
+    }
+  });
 
 function activatePane(id) {
   tabButtons.forEach((button) => {
@@ -305,7 +335,10 @@ function renderJob(job) {
     if (job.model_name) lines.push(`模型：${job.model_name}`);
     if (job.target) lines.push(`目标：${job.target}`);
     if (job.scale) lines.push(`实际倍率：${job.scale}x`);
-    if (job.tile_preset) lines.push(`性能模式：${job.tile_preset}`);
+    if (job.tile_preset_label || job.tile_preset) lines.push(`性能模式：${job.tile_preset_label || job.tile_preset}`);
+    if (job.hardware) lines.push(`处理设备：${job.hardware}`);
+    if (job.effective_tile) lines.push(`实际 Tile：${job.effective_tile}`);
+    if (job.precision) lines.push(`计算精度：${job.precision}`);
   }
 
   meta.innerHTML = lines.map((line) => `<div>${escapeHtml(line)}</div>`).join("");
