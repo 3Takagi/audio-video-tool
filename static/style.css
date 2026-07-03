@@ -870,10 +870,28 @@ pre {
   font-size: 13px;
 }
 
-.hardware-panel__title > span:last-child {
-  margin-left: auto;
+#hardware-scan-status {
   color: var(--muted);
   font-size: 11px;
+}
+
+.hardware-rescan {
+  width: auto;
+  min-height: 28px;
+  margin-left: auto;
+  padding: 5px 10px;
+  border: 1px solid color-mix(in srgb, var(--accent) 24%, transparent);
+  border-radius: 9px;
+  background: rgba(255,255,255,.68);
+  color: var(--accent);
+  font-size: 11px;
+  font-weight: 850;
+  box-shadow: none;
+}
+
+.hardware-rescan:disabled {
+  cursor: wait;
+  opacity: .5;
 }
 
 .hardware-panel__dot {
