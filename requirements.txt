@@ -5,4 +5,4 @@ pillow
 psutil
 requests
 websocket-client
-yt-dlp
+yt-dlp[default]>=2026.8.19
