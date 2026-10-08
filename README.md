@@ -22,7 +22,11 @@
 
 ## 下载
 
-前往 [GitHub Releases](https://github.com/3Takagi/audio-video-tool/releases/tag/v0.1.0) 下载。当前版本提供两个文件，二选一即可：
+启动程序时会自动检查下载组件，每 24 小时最多检查一次。新版 yt-dlp 和配套 EJS 脚本在独立目录中校验成功后生效，更新失败时继续使用已安装版本；失败后 6 小时内不会重复检查。首次升级可能需要等待一两分钟，记录位于安装目录的 `logs/downloader-update.log`。这项检查在启动时运行，关机期间不会更新。
+
+需要立即检查时，可在后端目录运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\update-downloader.ps1`。Node 运行时缺失或版本不受支持时会自动补齐。项目功能修复仍通过发行版补丁更新。
+
+前往 [GitHub Releases](https://github.com/3Takagi/audio-video-tool/releases/latest) 下载。当前后端版本为 `0.1.7`，桌面壳版本仍为 `0.1.0`，首次启动会检查后端补丁。两个主程序二选一即可：
 
 | 版本 | 文件 | 适合场景 |
 | --- | --- | --- |

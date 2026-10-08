@@ -225,6 +225,7 @@ $VenvPython = Join-Path $VenvDir "Scripts\python.exe"
 Write-Step "Install web and downloader dependencies"
 Run-Native $VenvPython @("-m", "pip", "install", "--upgrade", "pip<26", "setuptools<82", "wheel")
 Run-Native $VenvPython @("-m", "pip", "install", "-r", (Join-Path $Root "requirements.txt"))
+& (Join-Path $Root "update-downloader.ps1") -BackendRoot $Root
 
 Write-Step "Install PyTorch and Real-ESRGAN dependencies"
 Run-Native $VenvPython @("-m", "pip", "install", "torch==2.1.2", "torchvision==0.16.2", "torchaudio==2.1.2", "--index-url", "https://download.pytorch.org/whl/cu121")

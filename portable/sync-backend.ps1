@@ -104,6 +104,7 @@ if ($copyContent) {
   Copy-Path "requirements.txt"
   Copy-Path "install.ps1"
   Copy-Path "update.ps1"
+  Copy-Path "update-downloader.ps1"
   Copy-Path "sync-backend.ps1"
   Copy-Path "slim.ps1"
   Copy-Path "patch-update.ps1"

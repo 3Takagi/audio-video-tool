@@ -28,6 +28,7 @@ New-Item -ItemType Directory -Force -Path $Stage | Out-Null
 New-Item -ItemType Directory -Force -Path (Join-Path $Stage "app") | Out-Null
 
 Copy-Item -LiteralPath (Join-Path $Project "app.py") -Destination (Join-Path $Stage "app\app.py")
+Copy-Item -LiteralPath (Join-Path $Project "portable\update-downloader.ps1") -Destination (Join-Path $Stage "app\update-downloader.ps1")
 New-Item -ItemType File -Force -Path (Join-Path $Stage "app\__init__.py") | Out-Null
 Copy-Item -LiteralPath (Join-Path $Project "static") -Destination (Join-Path $Stage "app\static") -Recurse
 Copy-Item -LiteralPath (Join-Path $Project "templates") -Destination (Join-Path $Stage "app\templates") -Recurse
@@ -37,6 +38,7 @@ Copy-Item -LiteralPath (Join-Path $Project "app-version.json") -Destination (Joi
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.bat") -Destination (Join-Path $Stage "start.bat")
 Copy-Item -LiteralPath (Join-Path $Project "portable\start.ps1") -Destination (Join-Path $Stage "start.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\update.ps1") -Destination (Join-Path $Stage "update.ps1")
+Copy-Item -LiteralPath (Join-Path $Project "portable\update-downloader.ps1") -Destination (Join-Path $Stage "update-downloader.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\patch-update.ps1") -Destination (Join-Path $Stage "patch-update.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\install.ps1") -Destination (Join-Path $Stage "install.ps1")
 Copy-Item -LiteralPath (Join-Path $Project "portable\slim.ps1") -Destination (Join-Path $Stage "slim.ps1")

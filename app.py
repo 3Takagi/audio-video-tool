@@ -128,6 +128,38 @@ HARDWARE_CACHE: dict | None = None
 UPDATE_LOCK = threading.Lock()
 
 
+def ytdlp_command() -> list[str]:
+    packages = ROOT / "runtime" / "downloader"
+    if (packages / "yt_dlp" / "__init__.py").is_file():
+        return [str(PYTHON), "-c", "import sys,runpy;sys.path.insert(0,sys.argv.pop(1));runpy.run_module('yt_dlp',run_name='__main__')", str(packages)]
+    return [str(PYTHON), "-m", "yt_dlp"]
+
+
+@app.on_event("startup")
+def maintain_downloader() -> None:
+    updater = APP_DIR / "update-downloader.ps1"
+    if not updater.is_file():
+        updater = ROOT / "update-downloader.ps1"
+    if os.name != "nt" or not updater.is_file():
+        return
+    log_dir = ROOT / "logs"
+    log_dir.mkdir(parents=True, exist_ok=True)
+    with (log_dir / "downloader-update.log").open("a", encoding="utf-8") as log:
+        try:
+            process = subprocess.Popen(
+                ["powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(updater), "-BackendRoot", str(ROOT), "-Automatic"],
+                stdout=log, stderr=subprocess.STDOUT, creationflags=subprocess.CREATE_NO_WINDOW,
+            )
+        except OSError as exc:
+            log.write(f"Downloader check could not start: {exc}\n")
+            return
+        try:
+            process.wait(timeout=120)
+        except subprocess.TimeoutExpired:
+            terminate_process_tree(process)
+            log.write("Downloader update timed out; continuing with installed components.\n")
+
+
 def read_app_version() -> dict:
     for version_file in (ROOT / "app-version.json", APP_DIR / "app-version.json"):
         if version_file.exists():
@@ -303,6 +335,13 @@ def parse_ytdlp_progress(job_id: str, line: str) -> None:
 
 
 def ytdlp_site_args(url: str) -> list[str]:
+    host = (urlparse(url).hostname or "").lower()
+    if host == "youtu.be" or host == "youtube.com" or host.endswith(".youtube.com"):
+        for runtime, bundled in (("node", TOOLS / "node" / "node.exe"), ("deno", TOOLS / "deno" / "deno.exe")):
+            executable = str(bundled) if bundled.is_file() else shutil.which(runtime)
+            if executable:
+                return ["--encoding", "utf-8", "--http-chunk-size", "1M", "--js-runtimes", f"{runtime}:{executable}"]
+        return ["--encoding", "utf-8", "--http-chunk-size", "1M"]
     if "bilibili.com" not in url:
         return []
 
@@ -1030,9 +1069,7 @@ def run_ytdlp(job_id: str) -> None:
             f"{video_filter}+{audio_filter}/{fallback_filter}/bv*+ba/b"
         )
     cmd = [
-        str(PYTHON),
-        "-m",
-        "yt_dlp",
+        *ytdlp_command(),
         "-f",
         format_selector,
         "--merge-output-format",
@@ -1042,6 +1079,7 @@ def run_ytdlp(job_id: str) -> None:
         "--windows-filenames",
         "--newline",
         "--no-mtime",
+        "--check-formats",
         "--write-thumbnail",
         "--convert-thumbnails",
         "jpg",
@@ -1112,9 +1150,7 @@ def run_ytdlp_thumbnail(job_id: str) -> None:
     update_job(job_id, status="running", message="yt-dlp is downloading the thumbnail", progress=20, progress_label="读取封面")
 
     cmd = [
-        str(PYTHON),
-        "-m",
-        "yt_dlp",
+        *ytdlp_command(),
         "--skip-download",
         "--write-thumbnail",
         "--convert-thumbnails",
@@ -1275,9 +1311,7 @@ async def use_browser_bilibili_auth(
 
     BILIBILI_COOKIES.parent.mkdir(parents=True, exist_ok=True)
     cmd = [
-        str(PYTHON),
-        "-m",
-        "yt_dlp",
+        *ytdlp_command(),
         "--no-playlist",
         "--skip-download",
         "--cookies",
@@ -1339,9 +1373,7 @@ async def check_bilibili_formats(url: str = Form(...)) -> JSONResponse:
         raise HTTPException(status_code=400, detail="请输入 http 或 https 开头的视频链接")
 
     cmd = [
-        str(PYTHON),
-        "-m",
-        "yt_dlp",
+        *ytdlp_command(),
         "--no-playlist",
         "-F",
         *ytdlp_site_args(clean_url),
@@ -1378,9 +1410,7 @@ async def preview_playlist(url: str = Form(...)) -> JSONResponse:
         raise HTTPException(status_code=400, detail="请输入 http 或 https 开头的播放列表链接")
 
     cmd = [
-        str(PYTHON),
-        "-m",
-        "yt_dlp",
+        *ytdlp_command(),
         "--flat-playlist",
         "--dump-single-json",
         "--ignore-errors",

@@ -109,7 +109,7 @@ try {
   Move-Item -LiteralPath $NextApp -Destination (Join-Path $Root "app")
   $AppInstalled = $true
 
-  foreach ($name in @("requirements.txt", "install.ps1", "update.ps1", "sync-backend.ps1", "slim.ps1", "patch-update.ps1", "config.example.json")) {
+  foreach ($name in @("requirements.txt", "install.ps1", "update.ps1", "update-downloader.ps1", "sync-backend.ps1", "slim.ps1", "patch-update.ps1", "config.example.json")) {
     $source = Join-Path $ExtractRoot $name
     if (Test-Path -LiteralPath $source) {
       Copy-Item -LiteralPath $source -Destination (Join-Path $Root $name) -Force
@@ -126,6 +126,7 @@ try {
     }
   }
 
+  & (Join-Path $Root "update-downloader.ps1") -BackendRoot $Root
   Copy-Item -LiteralPath (Join-Path $ExtractRoot "app-version.json") -Destination $LocalVersionFile -Force
   Remove-Item -LiteralPath $BackupApp -Recurse -Force -ErrorAction SilentlyContinue
   Remove-Item -LiteralPath $BackupRequirements -Force -ErrorAction SilentlyContinue

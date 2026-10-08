@@ -95,7 +95,7 @@ Start-Process $url
 $serverOut = Join-Path $LogDir "server.log"
 $serverErr = Join-Path $LogDir "server.err.log"
 $arguments = @("-m", "uvicorn", "app.app:app", "--host", $hostName, "--port", "$port")
-$process = Start-Process -FilePath $Python -ArgumentList $arguments -WorkingDirectory $Root -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -Wait
+$process = Start-Process -FilePath $Python -ArgumentList $arguments -WorkingDirectory $Root -WindowStyle Hidden -RedirectStandardOutput $serverOut -RedirectStandardError $serverErr -PassThru -Wait
 if ($process.ExitCode -eq -1073741510) {
   Write-Host "Server stopped." -ForegroundColor Yellow
   exit 0

@@ -22,7 +22,11 @@ It presents the product scope, core workflows, before-and-after upscaling result
 
 ## Download
 
-Download from [GitHub Releases](https://github.com/3Takagi/audio-video-tool/releases/tag/v0.1.0). The current release provides two files. You only need one:
+At startup, downloader components are checked at most once every 24 hours. yt-dlp and its EJS scripts are staged and validated in an isolated directory before activation. Failed updates retain the installed version and are retried no sooner than six hours later. The first update can take a minute or two; see `logs/downloader-update.log` in the backend directory. Checks run only while starting the application.
+
+To check immediately, run `powershell -NoProfile -ExecutionPolicy Bypass -File .\update-downloader.ps1` from the backend directory. Missing or unsupported Node runtimes are installed automatically. Application feature fixes are delivered separately through release patches.
+
+Download from [GitHub Releases](https://github.com/3Takagi/audio-video-tool/releases/latest). The current backend version is `0.1.7`; the desktop shell remains `0.1.0` and checks for backend patches at launch. You only need one of the two application packages:
 
 | Version | File | Best for |
 | --- | --- | --- |

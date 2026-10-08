@@ -21,6 +21,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 $root = [string]($syncOutput | Select-Object -Last 1)
+& (Join-Path $root "update-downloader.ps1") -BackendRoot $root
 Write-Host "Updated backend files:" -ForegroundColor Cyan
 Write-Host $root
 Write-Host ""
